@@ -4,9 +4,9 @@ import cors from "@fastify/cors";
 import { initServer } from "@ts-rest/fastify";
 import { contract } from "@repo/contracts";
 import { createDatabase } from "./db/database.js";
-import { SignatureRxService } from "./services/signaturerx.service.js";
-import { PrescriptionService } from "./services/prescription.service.js";
-import { WebhookService } from "./services/webhook.service.js";
+import * as signatureRxService from "./services/signaturerx.service.js";
+import * as prescriptionService from "./services/prescription.service.js";
+import * as webhookService from "./services/webhook.service.js";
 import { medications } from "./data/medications.js";
 
 const PORT = parseInt(process.env.PORT || "3001", 10);
@@ -35,11 +35,8 @@ async function main() {
     credentials: true,
   });
 
-  // Initialize database and services
+  // Initialize database
   const db = createDatabase(DATABASE_URL);
-  const signatureRxService = new SignatureRxService();
-  const prescriptionService = new PrescriptionService(db, signatureRxService);
-  const webhookService = new WebhookService(db, prescriptionService);
 
   // Initialize ts-rest server
   const s = initServer();
@@ -77,7 +74,7 @@ async function main() {
       create: async ({ body }) => {
         try {
           const prescription =
-            await prescriptionService.createPrescription(body);
+            await prescriptionService.createPrescription(db, body);
 
           return {
             status: 200,
@@ -107,7 +104,7 @@ async function main() {
       },
 
       list: async () => {
-        const prescriptions = await prescriptionService.listPrescriptions();
+        const prescriptions = await prescriptionService.listPrescriptions(db);
 
         return {
           status: 200,
@@ -120,6 +117,7 @@ async function main() {
 
       getById: async ({ params }) => {
         const prescription = await prescriptionService.getPrescriptionById(
+          db,
           params.id,
         );
 
@@ -140,7 +138,7 @@ async function main() {
     webhooks: {
       signaturerx: async ({ body }) => {
         try {
-          await webhookService.handleWebhookEvent(body);
+          await webhookService.handleWebhookEvent(db, body);
 
           return {
             status: 200,

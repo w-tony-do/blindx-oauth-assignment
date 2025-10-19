@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { SignatureRxService } from '../signaturerx.service';
+import * as signatureRxService from '../signaturerx.service';
 
 // Mock environment variables
 process.env.SIGNATURERX_CLIENT_ID = 'test_client_id';
@@ -8,10 +8,7 @@ process.env.SIGNATURERX_TOKEN_URL = 'https://test.api.com/oauth/token';
 process.env.SIGNATURERX_API_URL = 'https://test.api.com/api';
 
 describe('SignatureRxService', () => {
-  let service: SignatureRxService;
-
   beforeEach(() => {
-    service = new SignatureRxService();
     vi.clearAllMocks();
   });
 
@@ -29,7 +26,7 @@ describe('SignatureRxService', () => {
         json: async () => mockToken,
       } as Response);
 
-      const token = await service.getAccessToken();
+      const token = await signatureRxService.getAccessToken();
 
       expect(token).toBe('test_access_token');
       expect(fetch).toHaveBeenCalledWith(
@@ -54,10 +51,10 @@ describe('SignatureRxService', () => {
       } as Response);
 
       // First call - fetches new token
-      const token1 = await service.getAccessToken();
+      const token1 = await signatureRxService.getAccessToken();
       
       // Second call - should use cached token
-      const token2 = await service.getAccessToken();
+      const token2 = await signatureRxService.getAccessToken();
 
       expect(token1).toBe(token2);
       expect(fetch).toHaveBeenCalledTimes(1); // Only called once
@@ -66,7 +63,7 @@ describe('SignatureRxService', () => {
 
   describe('getTokenStatus', () => {
     it('should return hasToken false when no token exists', () => {
-      const status = service.getTokenStatus();
+      const status = signatureRxService.getTokenStatus();
 
       expect(status.hasToken).toBe(false);
       expect(status.expiresAt).toBe(null);
