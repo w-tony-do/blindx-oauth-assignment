@@ -21,7 +21,7 @@ pnpm install
 ### 2. Start Database (30 seconds)
 
 ```bash
-cd apps/backend
+cd apps/prescription
 docker-compose up -d
 ```
 
@@ -52,7 +52,7 @@ cp .env.example .env
 ### 4. Run Migrations (30 seconds)
 
 ```bash
-cd apps/backend
+cd apps/prescription
 pnpm db:migrate
 ```
 
@@ -90,16 +90,16 @@ Open browser: http://localhost:3000
 pnpm dev
 
 # Run tests
-cd apps/backend && pnpm test
+cd apps/prescription && pnpm test
 
 # Check database
 docker exec -it backend-postgres-1 psql -U blinx -d blinx_signaturerx
 
 # View logs
-cd apps/backend && docker-compose logs -f postgres
+cd apps/prescription && docker-compose logs -f postgres
 
 # Stop everything
-cd apps/backend && docker-compose down
+cd apps/prescription && docker-compose down
 ```
 
 ---
@@ -174,7 +174,7 @@ lsof -ti:3001 | xargs kill -9
 ### Database connection failed?
 
 ```bash
-cd apps/backend
+cd apps/prescription
 docker-compose down
 docker-compose up -d
 ```
@@ -189,7 +189,7 @@ cd packages/contracts && pnpm build
 ### Fresh start?
 
 ```bash
-cd apps/backend
+cd apps/prescription
 docker-compose down -v
 docker-compose up -d
 pnpm db:migrate
