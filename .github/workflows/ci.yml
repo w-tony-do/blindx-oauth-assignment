@@ -1,7 +1,7 @@
-name: Deploy lambda
+name: CI
 on:
   push:
-    branches: [main, sandbox]
+    branches: [master, sandbox]
 env:
   NODE_ENV: production
 
@@ -36,7 +36,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Type constraint check
-        run: pnpm typecheck
+        run: pnpm check-types
 
       - name: CVE check
         run: pnpm audit

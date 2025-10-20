@@ -3,7 +3,10 @@ import type {
   StoredPrescription,
 } from "@repo/contracts";
 import { $db } from "../libs/db/database";
-import { SignatureRxPrescriptionResponse } from "../types/auth";
+import {
+  SignatureRxPrescriptionResponse,
+  SignatureRxApiResponse,
+} from "../types/auth";
 import * as signatureRxService from "./signaturerx.service";
 import { mockPrescription } from "../helpers/mock-api";
 
@@ -90,11 +93,11 @@ export async function updatePrescriptionStatus(
 export async function issuePrescription(
   payload: CreatePrescriptionRequest,
   retryOnExpiry = true,
-): Promise<SignatureRxPrescriptionResponse> {
+): Promise<SignatureRxApiResponse> {
   const accessToken = await signatureRxService.getAccessToken();
   const { signatureRxBaseUrl, isMock } = signatureRxService.getConfig();
   if (isMock) {
-    return mockPrescription();
+    return mockPrescription() as SignatureRxApiResponse;
   }
 
   const url = `${signatureRxBaseUrl}/api/v1/ehr-prescription-patient`;

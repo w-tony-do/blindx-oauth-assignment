@@ -40,8 +40,14 @@ export const router = (
     prescriptions: {
       create: async ({ body }) => {
         try {
-          const signatures = await issuePrescription(body);
-          const prescription = await createPrescription(body, signatures);
+          const apiResponse = await issuePrescription(body);
+          const signatureRxResponse = {
+            prescription_id: apiResponse.prescription_id,
+          };
+          const prescription = await createPrescription(
+            body,
+            signatureRxResponse,
+          );
 
           return {
             status: 200,

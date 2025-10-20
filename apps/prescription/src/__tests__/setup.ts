@@ -11,6 +11,8 @@ process.env.SIGNATURERX_CLIENT_ID = "test_client_id";
 process.env.SIGNATURERX_CLIENT_SECRET = "test_client_secret";
 process.env.SIGNATURERX_TOKEN_URL = "https://test.api.com/oauth/token";
 process.env.SIGNATURERX_API_URL = "https://test.api.com/api";
+process.env.SIGNATURERX_BASE_URL = "https://test.api.com";
+process.env.SIGNATURERX_MOCK = "false";
 
 // Test database setup
 export async function setupTestDatabase() {
@@ -86,20 +88,22 @@ export const mockMedicine = {
 
 export const mockPrescriptionRequest = {
   action: "issueForDelivery" as const,
+  contact_id: 0,
   clinic_id: 842,
   secure_pin: "1234",
   notify: true,
   send_sms: true,
   invoice_clinic: false,
   delivery_address: mockDeliveryAddress,
+  prescription_id: "",
   patient: mockPatient,
+  notes: "",
+  client_ref_id: "",
   medicines: [mockMedicine],
 };
 
 export const mockSignatureRxResponse = {
-  status: "Sent",
   prescription_id: "RX-123456",
-  message: "Prescription created successfully",
 };
 
 export const mockTokenResponse = {

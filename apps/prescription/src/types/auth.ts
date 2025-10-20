@@ -1,4 +1,5 @@
-export interface SignatureRxPrescriptionResponse {
+// Response from SignatureRx API when issuing a prescription
+export interface SignatureRxApiResponse {
   action: string;
   contact_id: number;
   aff_tag: string;
@@ -49,6 +50,13 @@ export interface SignatureRxPrescriptionResponse {
     directions: string;
   }>;
   prescriber_ip: string;
+}
+
+// Simplified response type for storing prescription data
+export interface SignatureRxPrescriptionResponse {
+  prescription_id?: string | null;
+  status?: string;
+  message?: string;
 }
 
 export interface TokenStore {

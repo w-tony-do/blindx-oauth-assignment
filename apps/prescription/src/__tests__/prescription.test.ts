@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import * as prescriptionService from "../services/prescription.service";
 import {
   mockPrescriptionRequest,
@@ -6,11 +6,19 @@ import {
   mockTokenResponse,
   setupTestDatabase,
 } from "./setup";
+import { mockPrescription } from "../helpers/mock-api";
+
+let fetchSpy: any;
 
 describe("Prescription Service", () => {
   beforeEach(async () => {
     await setupTestDatabase();
     vi.clearAllMocks();
+    fetchSpy = vi.spyOn(global, "fetch");
+  });
+
+  afterEach(() => {
+    fetchSpy?.mockRestore();
   });
 
   describe("createPrescription", () => {
@@ -76,8 +84,8 @@ describe("Prescription Service", () => {
       const prescriptions = await prescriptionService.listPrescriptions();
 
       expect(prescriptions).toHaveLength(2);
-      expect(prescriptions[0].created_at).toBeDefined();
-      expect(prescriptions[1].created_at).toBeDefined();
+      expect(prescriptions[0]?.created_at).toBeDefined();
+      expect(prescriptions[1]?.created_at).toBeDefined();
     });
 
     it("should return prescriptions ordered by created_at desc", async () => {
@@ -102,8 +110,8 @@ describe("Prescription Service", () => {
 
       const prescriptions = await prescriptionService.listPrescriptions();
 
-      expect(prescriptions[0].id).toBe(second.id);
-      expect(prescriptions[1].id).toBe(first.id);
+      expect(prescriptions[0]?.id).toBe(second.id);
+      expect(prescriptions[1]?.id).toBe(first.id);
     });
   });
 
@@ -164,28 +172,27 @@ describe("Prescription Service", () => {
 
   describe("issuePrescription", () => {
     it("should successfully issue a prescription", async () => {
-      global.fetch = vi
-        .fn()
+      const mockApiResponse = mockPrescription();
+      fetchSpy
         .mockResolvedValueOnce({
           ok: true,
           json: async () => mockTokenResponse,
         } as Response)
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => mockSignatureRxResponse,
+          json: async () => mockApiResponse,
         } as Response);
 
       const result = await prescriptionService.issuePrescription(
         mockPrescriptionRequest,
       );
 
-      expect(result.status).toBe("Sent");
-      expect(result.prescription_id).toBe("RX-123456");
+      expect(result.prescription_id).toBe("SRXC49F3D4F66A7");
+      expect(result.action).toBe("draft");
     });
 
     it("should throw error on API failure", async () => {
-      global.fetch = vi
-        .fn()
+      fetchSpy
         .mockResolvedValueOnce({
           ok: true,
           json: async () => mockTokenResponse,
@@ -202,8 +209,8 @@ describe("Prescription Service", () => {
     });
 
     it("should retry on 401 error", async () => {
-      global.fetch = vi
-        .fn()
+      const mockApiResponse = mockPrescription();
+      fetchSpy
         .mockResolvedValueOnce({
           ok: true,
           json: async () => mockTokenResponse,
@@ -211,6 +218,7 @@ describe("Prescription Service", () => {
         .mockResolvedValueOnce({
           ok: false,
           status: 401,
+          json: async () => ({}),
         } as Response)
         .mockResolvedValueOnce({
           ok: true,
@@ -218,20 +226,19 @@ describe("Prescription Service", () => {
         } as Response)
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => mockSignatureRxResponse,
+          json: async () => mockApiResponse,
         } as Response);
 
       const result = await prescriptionService.issuePrescription(
         mockPrescriptionRequest,
       );
 
-      expect(result.status).toBe("Sent");
-      expect(fetch).toHaveBeenCalledTimes(4); // Initial token + 401 + refresh token + retry
+      expect(result.prescription_id).toBe("SRXC49F3D4F66A7");
+      expect(fetchSpy).toHaveBeenCalledTimes(4); // Initial token + 401 + refresh token + retry
     });
 
     it("should not retry more than once", async () => {
-      global.fetch = vi
-        .fn()
+      fetchSpy
         .mockResolvedValueOnce({
           ok: true,
           json: async () => mockTokenResponse,
@@ -239,6 +246,7 @@ describe("Prescription Service", () => {
         .mockResolvedValueOnce({
           ok: false,
           status: 401,
+          json: async () => ({}),
         } as Response)
         .mockResolvedValueOnce({
           ok: true,
@@ -247,6 +255,7 @@ describe("Prescription Service", () => {
         .mockResolvedValueOnce({
           ok: false,
           status: 401,
+          json: async () => ({}),
         } as Response);
 
       await expect(
@@ -254,24 +263,24 @@ describe("Prescription Service", () => {
       ).rejects.toThrow();
 
       // Should not retry indefinitely
-      expect(fetch).toHaveBeenCalledTimes(4);
+      expect(fetchSpy).toHaveBeenCalledTimes(4);
     });
 
     it("should send correct payload to SignatureRx API", async () => {
-      global.fetch = vi
-        .fn()
+      const mockApiResponse = mockPrescription();
+      fetchSpy
         .mockResolvedValueOnce({
           ok: true,
           json: async () => mockTokenResponse,
         } as Response)
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => mockSignatureRxResponse,
+          json: async () => mockApiResponse,
         } as Response);
 
       await prescriptionService.issuePrescription(mockPrescriptionRequest);
 
-      const prescriptionCall = (fetch as any).mock.calls.find((call: any) =>
+      const prescriptionCall = fetchSpy.mock.calls.find((call: any) =>
         call[0].includes("/ehr-prescription-patient"),
       );
 
