@@ -1,12 +1,14 @@
+import { generateJwtToken } from "../helpers/mock-api";
 import { REDIS_KEYS, redisClient } from "../libs/redis";
 import { SignatureRxTokenResponse, TokenStore } from "../types/auth";
 
 export function getConfig() {
+  const isMock = process.env.SIGNATURERX_MOCK === "true";
   const clientId = process.env.SIGNATURERX_CLIENT_ID || "";
   const clientSecret = process.env.SIGNATURERX_CLIENT_SECRET || "";
   const signatureRxBaseUrl = process.env.SIGNATURERX_BASE_URL || "";
 
-  return { clientId, clientSecret, signatureRxBaseUrl };
+  return { clientId, clientSecret, signatureRxBaseUrl, isMock };
 }
 
 export async function getTokenFromRedis(): Promise<TokenStore | null> {
@@ -128,6 +130,9 @@ async function fetchSignatureRxRefreshToken(
 }
 
 export async function refreshNewToken(): Promise<SignatureRxTokenResponse> {
+  if (getConfig().isMock) {
+    return generateJwtToken();
+  }
   const tokenStore = await getTokenFromRedis();
 
   if (!tokenStore) {

@@ -2,7 +2,7 @@ import { refreshNewToken } from "./signaturerx.service";
 
 // Check every 5 minutes (configurable via env)
 const CHECK_INTERVAL_MS =
-  parseInt(process.env.TOKEN_CHECK_INTERVAL_MINUTES || "1", 10) * 60 * 1000;
+  parseInt(process.env.TOKEN_CHECK_INTERVAL_MINUTES || "1", 10) * 60_000;
 
 let intervalId: NodeJS.Timeout | null = null;
 

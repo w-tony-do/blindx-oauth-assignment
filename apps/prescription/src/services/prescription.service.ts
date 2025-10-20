@@ -5,6 +5,7 @@ import type {
 import { $db } from "../db/database";
 import { SignatureRxPrescriptionResponse } from "../types/auth";
 import * as signatureRxService from "./signaturerx.service";
+import { mockPrescription } from "../helpers/mock-api";
 
 function mapToStoredPrescription(row: any): StoredPrescription {
   return {
@@ -33,7 +34,7 @@ export async function createPrescription(
       signaturerx_prescription_id: signatures.prescription_id || null,
       patient_email: request.patient.email,
       patient_name: `${request.patient.first_name} ${request.patient.last_name}`,
-      status: signatures.status || "Sent",
+      status: "created",
       medicines: JSON.stringify(request.medicines),
       payload: JSON.stringify(request),
     })
@@ -95,9 +96,12 @@ export async function issuePrescription(
   retryOnExpiry = true,
 ): Promise<SignatureRxPrescriptionResponse> {
   const accessToken = await signatureRxService.getAccessToken();
-  const { signatureRxBaseUrl } = signatureRxService.getConfig();
+  const { signatureRxBaseUrl, isMock } = signatureRxService.getConfig();
+  if (isMock) {
+    return mockPrescription();
+  }
 
-  const url = `${signatureRxBaseUrl}/prescriptions`;
+  const url = `${signatureRxBaseUrl}/api/v1/ehr-prescription-patient`;
 
   console.log(
     `📤 Issuing prescription to SignatureRx for patient: ${payload.patient.email}`,

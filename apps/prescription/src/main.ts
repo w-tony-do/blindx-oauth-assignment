@@ -44,7 +44,6 @@ async function main() {
     startTokenRefreshCron();
   } catch (err) {
     app.log.error(err);
-    process.exit(1);
   }
 
   // Graceful shutdown
