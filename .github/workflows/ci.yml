@@ -1,0 +1,45 @@
+name: Deploy lambda
+on:
+  push:
+    branches: [main, sandbox]
+env:
+  NODE_ENV: production
+
+# permission can be added at job level or workflow level
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read # This is required for actions/checkout
+
+defaults:
+  run:
+    working-directory: ./
+jobs:
+  sstDeploy:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Git clone the repository
+        uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 10
+          run_install: false
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type constraint check
+        run: pnpm typecheck
+
+      - name: CVE check
+        run: pnpm audit
+
+      - name: Unit testing
+        run: pnpm test
