@@ -1,4 +1,4 @@
-import { Kysely, PostgresDialect, Generated, ColumnType } from "kysely";
+import { ColumnType, Generated, Kysely, PostgresDialect } from "kysely";
 import pg from "pg";
 
 const { Pool } = pg;
@@ -30,9 +30,7 @@ export interface WebhookEventsTable {
   received_at: Generated<Date>;
 }
 
-const DATABASE_URL =
-  process.env.DATABASE_URL ||
-  "postgresql://blinx:blinx_password@localhost:5432/blinx_signaturerx";
+const DATABASE_URL = process.env.DATABASE_URL;
 let dbInstance: Kysely<Database> | null = null;
 
 export function createDatabase(connectionString: string): Kysely<Database> {
@@ -49,6 +47,9 @@ export function createDatabase(connectionString: string): Kysely<Database> {
 }
 
 export const $db = () => {
+  if (!DATABASE_URL) {
+    throw new Error("DATABASE_URL is not defined");
+  }
   dbInstance ??= createDatabase(DATABASE_URL);
   return dbInstance;
 };

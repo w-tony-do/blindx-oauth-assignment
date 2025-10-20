@@ -3,7 +3,6 @@ import { z } from "zod";
 
 const c = initContract();
 
-// Schemas
 const MedicineSchema = z.object({
   snomedId: z.string(),
   displayName: z.string(),
@@ -100,7 +99,6 @@ const StoredPrescriptionSchema = z.object({
 });
 
 export const contract = c.router({
-  // Medications endpoints
   medications: {
     list: {
       method: "GET",
@@ -114,7 +112,6 @@ export const contract = c.router({
       summary: "List available medications",
     },
   },
-  // Prescriptions endpoints
   prescriptions: {
     create: {
       method: "POST",
@@ -152,7 +149,6 @@ export const contract = c.router({
       summary: "Get prescription by ID",
     },
   },
-  // Webhooks endpoint
   webhooks: {
     signaturerx: {
       method: "POST",
@@ -168,7 +164,6 @@ export const contract = c.router({
       summary: "Receive SignatureRx webhook events",
     },
   },
-  // Health check
   health: {
     check: {
       method: "GET",

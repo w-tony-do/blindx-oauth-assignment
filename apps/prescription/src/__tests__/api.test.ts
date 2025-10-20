@@ -13,7 +13,6 @@ describe("API Integration Tests", () => {
   let app: ReturnType<typeof Fastify>;
 
   beforeAll(async () => {
-    // Setup Fastify app
     app = Fastify({
       logger: false,
     });
@@ -80,7 +79,8 @@ describe("API Integration Tests", () => {
     describe("POST /prescriptions", () => {
       it("should create a prescription successfully", async () => {
         // Mock SignatureRx API calls
-        global.fetch = vi.fn()
+        global.fetch = vi
+          .fn()
           .mockResolvedValueOnce({
             ok: true,
             json: async () => mockTokenResponse,
@@ -196,8 +196,8 @@ describe("API Integration Tests", () => {
       });
 
       it("should retrieve prescription by id", async () => {
-        // First create a prescription
-        global.fetch = vi.fn()
+        global.fetch = vi
+          .fn()
           .mockResolvedValueOnce({
             ok: true,
             json: async () => mockTokenResponse,
@@ -232,8 +232,8 @@ describe("API Integration Tests", () => {
   describe("Webhooks API", () => {
     describe("POST /webhooks/signaturerx", () => {
       it("should process webhook successfully", async () => {
-        // First create a prescription to update
-        global.fetch = vi.fn()
+        global.fetch = vi
+          .fn()
           .mockResolvedValueOnce({
             ok: true,
             json: async () => mockTokenResponse,

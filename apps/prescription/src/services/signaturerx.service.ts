@@ -4,8 +4,7 @@ import { SignatureRxTokenResponse, TokenStore } from "../types/auth";
 export function getConfig() {
   const clientId = process.env.SIGNATURERX_CLIENT_ID || "";
   const clientSecret = process.env.SIGNATURERX_CLIENT_SECRET || "";
-  const signatureRxBaseUrl =
-    process.env.SIGNATURERX_BASE_URL || "https://app.signaturerx.co.uk/api/v1";
+  const signatureRxBaseUrl = process.env.SIGNATURERX_BASE_URL || "";
 
   return { clientId, clientSecret, signatureRxBaseUrl };
 }
@@ -61,18 +60,16 @@ async function fetchNewToken(): Promise<SignatureRxTokenResponse> {
     );
   }
 
-  const params = new URLSearchParams({
-    grant_type: "client_credentials",
-    client_id: clientId,
-    client_secret: clientSecret,
-  });
-
   const response = await fetch(`${signatureRxBaseUrl}/oauth/token`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: params.toString(),
+    body: JSON.stringify({
+      grant_type: "client_credentials",
+      client_id: clientId,
+      client_secret: clientSecret,
+    }),
   });
 
   if (!response.ok) {
@@ -102,7 +99,7 @@ async function fetchSignatureRxRefreshToken(
 ): Promise<SignatureRxTokenResponse> {
   const { signatureRxBaseUrl } = getConfig();
 
-  const response = await fetch(`${signatureRxBaseUrl}/refresh`, {
+  const response = await fetch(`${signatureRxBaseUrl}/api/v1/refresh`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

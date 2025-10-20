@@ -1,12 +1,16 @@
+import "dotenv/config";
+
 import { promises as fs } from "fs";
 import { FileMigrationProvider, Migrator } from "kysely";
 import path from "path";
 import { createDatabase } from "./database.js";
 
 async function migrateToLatest() {
-  const connectionString =
-    process.env.DATABASE_URL ||
-    "postgresql://blinx:blinx_password@localhost:5432/blinx_signaturerx";
+  const connectionString = process.env.DATABASE_URL;
+
+  if (!connectionString) {
+    throw new Error("DATABASE_URL is not defined");
+  }
 
   const db = createDatabase(connectionString);
 
