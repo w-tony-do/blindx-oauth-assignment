@@ -35,7 +35,7 @@ const DATABASE_URL =
   "postgresql://blinx:blinx_password@localhost:5432/blinx_signaturerx";
 let dbInstance: Kysely<Database> | null = null;
 
-function createDatabase(connectionString: string): Kysely<Database> {
+export function createDatabase(connectionString: string): Kysely<Database> {
   const dialect = new PostgresDialect({
     pool: new Pool({
       connectionString,

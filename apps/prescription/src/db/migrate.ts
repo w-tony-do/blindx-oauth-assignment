@@ -1,15 +1,12 @@
-import { Kysely, Migrator, FileMigrationProvider } from 'kysely';
-import { promises as fs } from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { createDatabase } from './database.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { promises as fs } from "fs";
+import { FileMigrationProvider, Migrator } from "kysely";
+import path from "path";
+import { createDatabase } from "./database.js";
 
 async function migrateToLatest() {
-  const connectionString = process.env.DATABASE_URL || 
-    'postgresql://blinx:blinx_password@localhost:5432/blinx_signaturerx';
+  const connectionString =
+    process.env.DATABASE_URL ||
+    "postgresql://blinx:blinx_password@localhost:5432/blinx_signaturerx";
 
   const db = createDatabase(connectionString);
 
@@ -18,27 +15,29 @@ async function migrateToLatest() {
     provider: new FileMigrationProvider({
       fs,
       path,
-      migrationFolder: path.join(__dirname, 'migrations'),
+      migrationFolder: path.join(__dirname, "migrations"),
     }),
   });
 
   const { error, results } = await migrator.migrateToLatest();
 
   results?.forEach((it) => {
-    if (it.status === 'Success') {
-      console.log(`✅ Migration "${it.migrationName}" was executed successfully`);
-    } else if (it.status === 'Error') {
+    if (it.status === "Success") {
+      console.log(
+        `✅ Migration "${it.migrationName}" was executed successfully`,
+      );
+    } else if (it.status === "Error") {
       console.error(`❌ Failed to execute migration "${it.migrationName}"`);
     }
   });
 
   if (error) {
-    console.error('❌ Failed to migrate');
+    console.error("❌ Failed to migrate");
     console.error(error);
     process.exit(1);
   }
 
-  console.log('✅ All migrations completed successfully');
+  console.log("✅ All migrations completed successfully");
   await db.destroy();
 }
 
