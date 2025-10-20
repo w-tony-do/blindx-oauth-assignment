@@ -115,7 +115,7 @@ export async function issuePrescription(
   // Handle token expiry
   if (response.status === 401 && retryOnExpiry) {
     console.log("🔄 Token expired mid-request, refreshing and retrying...");
-    tokenStore = null; // Force token refresh
+    await signatureRxService.resetTokenStore(); // Force token refresh
     return issuePrescription(payload, false); // Retry once
   }
 

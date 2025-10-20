@@ -4,6 +4,7 @@ import cors from "@fastify/cors";
 import { initServer } from "@ts-rest/fastify";
 import Fastify from "fastify";
 import { $db } from "./db/database";
+import { redisClient } from "./libs/redis";
 import { router } from "./router";
 
 const PORT = parseInt(process.env.PORT || "3001", 10);
@@ -44,6 +45,7 @@ async function main() {
     console.log(`\n${signal} received, shutting down gracefully...`);
     await app.close();
     await $db().destroy();
+    await redisClient.quit();
     process.exit(0);
   };
 
