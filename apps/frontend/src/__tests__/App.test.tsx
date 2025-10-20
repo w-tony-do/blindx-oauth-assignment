@@ -23,6 +23,12 @@ describe("App", () => {
       snomedId: "123456",
       displayName: "Paracetamol 500mg",
       type: "tablet",
+      unlicensed: false,
+      endorsements: {},
+      prescribeByBrandOnly: false,
+      bnfExactMatch: null,
+      bnfMatches: null,
+      applianceTypes: [],
     },
   ];
 
@@ -266,7 +272,7 @@ describe("App", () => {
     });
 
     const closeButton = screen.getAllByRole("button", { name: "×" })[0];
-    closeButton.click();
+    closeButton?.click();
 
     await waitFor(() => {
       expect(
@@ -307,7 +313,7 @@ describe("App", () => {
 
     // Select medication
     const medicationSelect = screen.getByLabelText("Medication *");
-    await user.selectOptions(medicationSelect, mockMedications[0].snomedId);
+    await user.selectOptions(medicationSelect, mockMedications[0]!.snomedId);
 
     // Submit form
     const submitButton = screen.getByRole("button", {
@@ -356,7 +362,7 @@ describe("App", () => {
 
     // Select medication
     const medicationSelect = screen.getByLabelText("Medication *");
-    await user.selectOptions(medicationSelect, mockMedications[0].snomedId);
+    await user.selectOptions(medicationSelect, mockMedications[0]!.snomedId);
 
     // Submit form
     const submitButton = screen.getByRole("button", {
@@ -454,7 +460,7 @@ describe("App", () => {
 
     // Select medication
     const medicationSelect = screen.getByLabelText("Medication *");
-    await user.selectOptions(medicationSelect, mockMedications[0].snomedId);
+    await user.selectOptions(medicationSelect, mockMedications[0]!.snomedId);
 
     // Submit form
     const submitButton = screen.getByRole("button", {
@@ -500,7 +506,7 @@ describe("App", () => {
 
     // Select medication
     const medicationSelect = screen.getByLabelText("Medication *");
-    await user.selectOptions(medicationSelect, mockMedications[0].snomedId);
+    await user.selectOptions(medicationSelect, mockMedications[0]!.snomedId);
 
     // Submit form
     const submitButton = screen.getByRole("button", {
@@ -546,7 +552,7 @@ describe("App", () => {
 
     // Select medication
     const medicationSelect = screen.getByLabelText("Medication *");
-    await user.selectOptions(medicationSelect, mockMedications[0].snomedId);
+    await user.selectOptions(medicationSelect, mockMedications[0]!.snomedId);
 
     // Submit form
     const submitButton = screen.getByRole("button", {
@@ -592,7 +598,7 @@ describe("App", () => {
 
     // Select medication
     const medicationSelect = screen.getByLabelText("Medication *");
-    await user.selectOptions(medicationSelect, mockMedications[0].snomedId);
+    await user.selectOptions(medicationSelect, mockMedications[0]!.snomedId);
 
     // Submit form
     const submitButton = screen.getByRole("button", {

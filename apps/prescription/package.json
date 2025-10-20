@@ -11,8 +11,8 @@
     "lint": "eslint . --ext .ts,.tsx",
     "check-types": "tsc --noEmit",
     "db:generate": "kysely-codegen",
-    "db:migrate": "tsx src/db/migrate.ts",
-    "db:seed": "tsx src/db/seed.ts"
+    "db:migrate": "tsx src/libs/db/migrate.ts",
+    "db:seed": "tsx src/libs/db/seed.ts"
   },
   "dependencies": {
     "@fastify/cors": "^9.0.1",

@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import * as webhookService from "../services/webhook.service";
+import { beforeEach, describe, expect, it } from "vitest";
+import { $db } from "../libs/db/database";
 import * as prescriptionService from "../services/prescription.service";
-import { $db } from "../db/database";
+import * as webhookService from "../services/webhook.service";
 import {
   mockPrescriptionRequest,
   mockSignatureRxResponse,
@@ -22,7 +22,9 @@ describe("Webhook Service", () => {
       );
 
       expect(prescription.status).toBe("Sent");
-      expect(prescription.signaturerx_prescription_id).toBe(mockSignatureRxResponse.prescription_id);
+      expect(prescription.signaturerx_prescription_id).toBe(
+        mockSignatureRxResponse.prescription_id,
+      );
 
       // Send webhook event
       const webhookEvent = {
@@ -39,7 +41,11 @@ describe("Webhook Service", () => {
       const updated = await $db()
         .selectFrom("prescriptions")
         .selectAll()
-        .where("signaturerx_prescription_id", "=", mockSignatureRxResponse.prescription_id!)
+        .where(
+          "signaturerx_prescription_id",
+          "=",
+          mockSignatureRxResponse.prescription_id!,
+        )
         .executeTakeFirst();
 
       expect(updated).toBeDefined();
@@ -81,7 +87,11 @@ describe("Webhook Service", () => {
       const updated = await $db()
         .selectFrom("prescriptions")
         .selectAll()
-        .where("signaturerx_prescription_id", "=", mockSignatureRxResponse.prescription_id!)
+        .where(
+          "signaturerx_prescription_id",
+          "=",
+          mockSignatureRxResponse.prescription_id!,
+        )
         .executeTakeFirst();
 
       expect(updated?.status).toBe("Cancelled");
@@ -108,7 +118,11 @@ describe("Webhook Service", () => {
       const updated = await $db()
         .selectFrom("prescriptions")
         .selectAll()
-        .where("signaturerx_prescription_id", "=", mockSignatureRxResponse.prescription_id!)
+        .where(
+          "signaturerx_prescription_id",
+          "=",
+          mockSignatureRxResponse.prescription_id!,
+        )
         .executeTakeFirst();
 
       expect(updated?.status).toBe("Delivered");
@@ -155,7 +169,11 @@ describe("Webhook Service", () => {
         const updated = await $db()
           .selectFrom("prescriptions")
           .selectAll()
-          .where("signaturerx_prescription_id", "=", mockSignatureRxResponse.prescription_id!)
+          .where(
+            "signaturerx_prescription_id",
+            "=",
+            mockSignatureRxResponse.prescription_id!,
+          )
           .executeTakeFirst();
 
         expect(updated?.status).toBe(status);

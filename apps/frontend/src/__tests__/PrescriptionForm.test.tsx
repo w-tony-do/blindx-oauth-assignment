@@ -13,11 +13,23 @@ describe("PrescriptionForm", () => {
       snomedId: "123456",
       displayName: "Paracetamol 500mg",
       type: "tablet",
+      unlicensed: false,
+      endorsements: {},
+      prescribeByBrandOnly: false,
+      bnfExactMatch: null,
+      bnfMatches: null,
+      applianceTypes: [],
     },
     {
       snomedId: "789012",
       displayName: "Ibuprofen 200mg",
       type: "capsule",
+      unlicensed: false,
+      endorsements: {},
+      prescribeByBrandOnly: false,
+      bnfExactMatch: null,
+      bnfMatches: null,
+      applianceTypes: [],
     },
   ];
 
@@ -75,12 +87,12 @@ describe("PrescriptionForm", () => {
     );
 
     const select = screen.getByLabelText("Medication *");
-    await user.selectOptions(select, mockMedications[0].snomedId);
+    await user.selectOptions(select, mockMedications[0]!.snomedId);
 
     expect(screen.getByText(/SNOMED ID:/)).toBeInTheDocument();
-    expect(screen.getByText(mockMedications[0].snomedId)).toBeInTheDocument();
+    expect(screen.getByText(mockMedications[0]!.snomedId)).toBeInTheDocument();
     expect(screen.getByText(/Type:/)).toBeInTheDocument();
-    expect(screen.getByText(mockMedications[0].type)).toBeInTheDocument();
+    expect(screen.getByText(mockMedications[0]!.type)).toBeInTheDocument();
   });
 
   it("shows alert when submitting without selecting a medication", async () => {
@@ -202,7 +214,7 @@ describe("PrescriptionForm", () => {
     );
 
     const select = screen.getByLabelText("Medication *");
-    await user.selectOptions(select, mockMedications[0].snomedId);
+    await user.selectOptions(select, mockMedications[0]!.snomedId);
 
     const submitButton = screen.getByRole("button", {
       name: /Create Prescription/i,
@@ -213,7 +225,7 @@ describe("PrescriptionForm", () => {
       expect(mockOnSubmit).toHaveBeenCalledTimes(1);
     });
 
-    const submittedData: PrescriptionFormData = mockOnSubmit.mock.calls[0][0];
+    const submittedData: PrescriptionFormData = mockOnSubmit.mock.calls[0]![0]!;
     expect(submittedData.selectedMedication).toEqual(mockMedications[0]);
     expect(submittedData.quantity).toBe("10");
     expect(submittedData.patient.first_name).toBe("John");
@@ -230,7 +242,7 @@ describe("PrescriptionForm", () => {
     );
 
     const select = screen.getByLabelText("Medication *");
-    await user.selectOptions(select, mockMedications[0].snomedId);
+    await user.selectOptions(select, mockMedications[0]!.snomedId);
 
     const checkbox = screen.getByLabelText("Same as patient address");
     await user.click(checkbox);
@@ -250,7 +262,7 @@ describe("PrescriptionForm", () => {
       expect(mockOnSubmit).toHaveBeenCalledTimes(1);
     });
 
-    const submittedData: PrescriptionFormData = mockOnSubmit.mock.calls[0][0];
+    const submittedData: PrescriptionFormData = mockOnSubmit.mock.calls[0]![0]!;
     expect(submittedData.delivery_address.address_ln1).toBe(
       "456 Different Street",
     );
@@ -325,7 +337,6 @@ describe("PrescriptionForm", () => {
       />,
     );
 
-    const genderSelect = screen.getByLabelText("Gender *");
     expect(screen.getByRole("option", { name: "Male" })).toBeInTheDocument();
     expect(screen.getByRole("option", { name: "Female" })).toBeInTheDocument();
     expect(screen.getByRole("option", { name: "Other" })).toBeInTheDocument();

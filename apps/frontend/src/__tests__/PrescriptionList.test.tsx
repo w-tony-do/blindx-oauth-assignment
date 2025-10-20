@@ -6,7 +6,7 @@ import type { StoredPrescription } from "@repo/contracts";
 describe("PrescriptionList", () => {
   const mockPrescriptions: StoredPrescription[] = [
     {
-      id: 1,
+      id: "1",
       signaturerx_prescription_id: "RX123456",
       patient_name: "John Doe",
       patient_email: "john.doe@example.com",
@@ -22,7 +22,7 @@ describe("PrescriptionList", () => {
       updated_at: "2024-01-15T10:30:00Z",
     },
     {
-      id: 2,
+      id: "2",
       signaturerx_prescription_id: "RX789012",
       patient_name: "Jane Smith",
       patient_email: "jane.smith@example.com",
@@ -98,7 +98,7 @@ describe("PrescriptionList", () => {
   it('displays "Pending" when prescription ID is not available', () => {
     const prescriptionsWithoutId: StoredPrescription[] = [
       {
-        ...mockPrescriptions[0],
+        ...mockPrescriptions[0]!,
         signaturerx_prescription_id: null,
       },
     ];
@@ -194,7 +194,7 @@ describe("PrescriptionList", () => {
   it("handles empty medicines array gracefully", () => {
     const prescriptionWithNoMeds: StoredPrescription[] = [
       {
-        ...mockPrescriptions[0],
+        ...mockPrescriptions[0]!,
         medicines: JSON.stringify([]),
       },
     ];
