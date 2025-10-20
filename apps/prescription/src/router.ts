@@ -15,7 +15,6 @@ export const router = (
   s: ReturnType<typeof initServer>,
 ) => {
   return s.router(contract, {
-    // Health check
     health: {
       check: async () => {
         return {
@@ -27,8 +26,6 @@ export const router = (
         };
       },
     },
-
-    // Medications endpoints
     medications: {
       list: async () => {
         return {
@@ -40,8 +37,6 @@ export const router = (
         };
       },
     },
-
-    // Prescriptions endpoints
     prescriptions: {
       create: async ({ body }) => {
         try {
@@ -103,7 +98,6 @@ export const router = (
         };
       },
     },
-
     webhooks: {
       signaturerx: async ({ body }) => {
         try {
