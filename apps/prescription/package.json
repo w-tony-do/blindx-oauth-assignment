@@ -2,6 +2,7 @@
   "name": "prescription",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "tsx watch src/main.ts",
     "build": "tsc",
@@ -35,9 +36,10 @@
     "@types/node": "^20.14.10",
     "@types/pg": "^8.11.6",
     "eslint": "^8.57.0",
+    "ioredis-mock": "^8.13.0",
     "kysely-codegen": "^0.15.0",
     "tsx": "^4.16.2",
     "typescript": "5.9.2",
-    "vitest": "^1.6.0"
+    "vitest": "^3.2.4"
   }
 }

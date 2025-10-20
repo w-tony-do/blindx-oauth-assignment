@@ -23,7 +23,6 @@ jobs:
       - uses: pnpm/action-setup@v4
         name: Install pnpm
         with:
-          version: 10
           run_install: false
 
       - name: Install Node.js
@@ -36,7 +35,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Type constraint check
-        run: pnpm check-types
+        run: pnpm --filter @repo/contracts build && pnpm check-types
 
       - name: CVE check
         run: pnpm audit
