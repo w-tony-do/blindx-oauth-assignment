@@ -1,48 +1,20 @@
-import "dotenv/config";
-import Fastify from "fastify";
-import cors from "@fastify/cors";
-import { initServer } from "@ts-rest/fastify";
 import { contract } from "@repo/contracts";
-import { createDatabase } from "./db/database.js";
-import * as signatureRxService from "./services/signaturerx.service.js";
-import * as prescriptionService from "./services/prescription.service.js";
-import * as webhookService from "./services/webhook.service.js";
-import { medications } from "./data/medications.js";
+import { initServer } from "@ts-rest/fastify";
+import Fastify from "fastify";
+import { medications } from "./data/medications";
+import {
+  createPrescription,
+  getPrescriptionById,
+  issuePrescription,
+  listPrescriptions,
+} from "./services/prescription.service";
+import { handleWebhookEvent } from "./services/webhook.service";
 
-const PORT = parseInt(process.env.PORT || "3001", 10);
-const DATABASE_URL =
-  process.env.DATABASE_URL ||
-  "postgresql://blinx:blinx_password@localhost:5432/blinx_signaturerx";
-
-async function main() {
-  // Initialize Fastify
-  const app = Fastify({
-    logger: {
-      level: "info",
-      transport: {
-        target: "pino-pretty",
-        options: {
-          translateTime: "HH:MM:ss Z",
-          ignore: "pid,hostname",
-        },
-      },
-    },
-  });
-
-  // Register CORS
-  await app.register(cors, {
-    origin: true, // Allow all origins in development
-    credentials: true,
-  });
-
-  // Initialize database
-  const db = createDatabase(DATABASE_URL);
-
-  // Initialize ts-rest server
-  const s = initServer();
-
-  // Create router
-  const router = s.router(contract, {
+export const router = (
+  app: ReturnType<typeof Fastify>,
+  s: ReturnType<typeof initServer>,
+) => {
+  return s.router(contract, {
     // Health check
     health: {
       check: async () => {
@@ -73,8 +45,8 @@ async function main() {
     prescriptions: {
       create: async ({ body }) => {
         try {
-          const prescription =
-            await prescriptionService.createPrescription(db, body);
+          const signatures = await issuePrescription(body);
+          const prescription = await createPrescription(body, signatures);
 
           return {
             status: 200,
@@ -104,7 +76,7 @@ async function main() {
       },
 
       list: async () => {
-        const prescriptions = await prescriptionService.listPrescriptions(db);
+        const prescriptions = await listPrescriptions();
 
         return {
           status: 200,
@@ -116,10 +88,7 @@ async function main() {
       },
 
       getById: async ({ params }) => {
-        const prescription = await prescriptionService.getPrescriptionById(
-          db,
-          params.id,
-        );
+        const prescription = await getPrescriptionById(params.id);
 
         if (!prescription) {
           return {
@@ -138,7 +107,7 @@ async function main() {
     webhooks: {
       signaturerx: async ({ body }) => {
         try {
-          await webhookService.handleWebhookEvent(db, body);
+          await handleWebhookEvent(body);
 
           return {
             status: 200,
@@ -158,33 +127,4 @@ async function main() {
       },
     },
   });
-
-  await app.register(s.plugin(router));
-
-  // Start server
-  try {
-    await app.listen({ port: PORT, host: "0.0.0.0" });
-    console.log(`\n🚀 Server running on http://localhost:${PORT}`);
-    console.log(`📚 API endpoints available at http://localhost:${PORT}/api`);
-    console.log(
-      `\n💡 SignatureRx OAuth Status:`,
-      signatureRxService.getTokenStatus(),
-    );
-  } catch (err) {
-    app.log.error(err);
-    process.exit(1);
-  }
-
-  // Graceful shutdown
-  const shutdown = async (signal: string) => {
-    console.log(`\n${signal} received, shutting down gracefully...`);
-    await app.close();
-    await db.destroy();
-    process.exit(0);
-  };
-
-  process.on("SIGINT", () => shutdown("SIGINT"));
-  process.on("SIGTERM", () => shutdown("SIGTERM"));
-}
-
-main();
+};

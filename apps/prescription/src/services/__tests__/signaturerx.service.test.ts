@@ -9,6 +9,7 @@ process.env.SIGNATURERX_API_URL = 'https://test.api.com/api';
 
 describe('SignatureRxService', () => {
   beforeEach(() => {
+    signatureRxService.resetTokenStore();
     vi.clearAllMocks();
   });
 

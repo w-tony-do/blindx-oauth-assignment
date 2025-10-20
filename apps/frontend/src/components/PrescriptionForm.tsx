@@ -1,5 +1,5 @@
-import { useState, FormEvent } from 'react';
-import type { Medicine } from '@repo/contracts';
+import type { Medicine } from "@repo/contracts";
+import { FormEvent, useState } from "react";
 
 interface PrescriptionFormProps {
   medications: Medicine[];
@@ -16,7 +16,7 @@ export interface PrescriptionFormData {
     last_name: string;
     email: string;
     phone: string;
-    gender: 'male' | 'female' | 'other';
+    gender: "male" | "female" | "other";
     birth_day: string;
     birth_month: string;
     birth_year: string;
@@ -36,43 +36,49 @@ export interface PrescriptionFormData {
   secure_pin: string;
 }
 
-export function PrescriptionForm({ medications, onSubmit, isLoading }: PrescriptionFormProps) {
-  const [selectedMedication, setSelectedMedication] = useState<Medicine | null>(null);
-  const [quantity, setQuantity] = useState('10');
-  const [directions, setDirections] = useState('Take as directed');
-  const [securePin, setSecurePin] = useState('111111');
+export function PrescriptionForm({
+  medications,
+  onSubmit,
+  isLoading,
+}: PrescriptionFormProps) {
+  const [selectedMedication, setSelectedMedication] = useState<Medicine | null>(
+    null,
+  );
+  const [quantity, setQuantity] = useState("10");
+  const [directions, setDirections] = useState("Take as directed");
+  const [securePin, setSecurePin] = useState("111111");
   const [useSameAddress, setUseSameAddress] = useState(true);
 
   // Patient details with mock data
   const [patient, setPatient] = useState({
-    first_name: 'John',
-    last_name: 'Doe',
-    email: 'john.doe@example.com',
-    phone: '441234567890',
-    gender: 'male' as const,
-    birth_day: '15',
-    birth_month: '06',
-    birth_year: '1985',
-    address_ln1: '123 High Street',
-    address_ln2: '',
-    city: 'London',
-    post_code: 'SW1A 1AA',
-    country: 'United Kingdom',
+    first_name: "John",
+    last_name: "Doe",
+    email: "john.doe@example.com",
+    phone: "441234567890",
+    gender: "male" as const,
+    birth_day: "15",
+    birth_month: "06",
+    birth_year: "1985",
+    address_ln1: "123 High Street",
+    address_ln2: "",
+    city: "London",
+    post_code: "SW1A 1AA",
+    country: "United Kingdom",
   });
 
   const [deliveryAddress, setDeliveryAddress] = useState({
-    address_ln1: '123 High Street',
-    address_ln2: '',
-    city: 'London',
-    post_code: 'SW1A 1AA',
-    country: 'United Kingdom',
+    address_ln1: "123 High Street",
+    address_ln2: "",
+    city: "London",
+    post_code: "SW1A 1AA",
+    country: "United Kingdom",
   });
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    
+
     if (!selectedMedication) {
-      alert('Please select a medication');
+      alert("Please select a medication");
       return;
     }
 
@@ -81,13 +87,15 @@ export function PrescriptionForm({ medications, onSubmit, isLoading }: Prescript
       quantity,
       directions,
       patient,
-      delivery_address: useSameAddress ? {
-        address_ln1: patient.address_ln1,
-        address_ln2: patient.address_ln2,
-        city: patient.city,
-        post_code: patient.post_code,
-        country: patient.country,
-      } : deliveryAddress,
+      delivery_address: useSameAddress
+        ? {
+            address_ln1: patient.address_ln1,
+            address_ln2: patient.address_ln2,
+            city: patient.city,
+            post_code: patient.post_code,
+            country: patient.country,
+          }
+        : deliveryAddress,
       secure_pin: securePin,
     };
 
@@ -105,9 +113,11 @@ export function PrescriptionForm({ medications, onSubmit, isLoading }: Prescript
           <label htmlFor="medication">Medication *</label>
           <select
             id="medication"
-            value={selectedMedication?.snomedId || ''}
+            value={selectedMedication?.snomedId || ""}
             onChange={(e) => {
-              const med = medications.find(m => m.snomedId === e.target.value);
+              const med = medications.find(
+                (m) => m.snomedId === e.target.value,
+              );
               setSelectedMedication(med || null);
             }}
             required
@@ -124,8 +134,12 @@ export function PrescriptionForm({ medications, onSubmit, isLoading }: Prescript
 
         {selectedMedication && (
           <div className="medication-details">
-            <p><strong>SNOMED ID:</strong> {selectedMedication.snomedId}</p>
-            <p><strong>Type:</strong> {selectedMedication.type}</p>
+            <p>
+              <strong>SNOMED ID:</strong> {selectedMedication.snomedId}
+            </p>
+            <p>
+              <strong>Type:</strong> {selectedMedication.type}
+            </p>
           </div>
         )}
 
@@ -167,7 +181,9 @@ export function PrescriptionForm({ medications, onSubmit, isLoading }: Prescript
               type="text"
               id="first_name"
               value={patient.first_name}
-              onChange={(e) => setPatient({ ...patient, first_name: e.target.value })}
+              onChange={(e) =>
+                setPatient({ ...patient, first_name: e.target.value })
+              }
               required
               className="form-control"
             />
@@ -179,7 +195,9 @@ export function PrescriptionForm({ medications, onSubmit, isLoading }: Prescript
               type="text"
               id="last_name"
               value={patient.last_name}
-              onChange={(e) => setPatient({ ...patient, last_name: e.target.value })}
+              onChange={(e) =>
+                setPatient({ ...patient, last_name: e.target.value })
+              }
               required
               className="form-control"
             />
@@ -193,7 +211,9 @@ export function PrescriptionForm({ medications, onSubmit, isLoading }: Prescript
               type="email"
               id="email"
               value={patient.email}
-              onChange={(e) => setPatient({ ...patient, email: e.target.value })}
+              onChange={(e) =>
+                setPatient({ ...patient, email: e.target.value })
+              }
               required
               className="form-control"
             />
@@ -205,7 +225,9 @@ export function PrescriptionForm({ medications, onSubmit, isLoading }: Prescript
               type="tel"
               id="phone"
               value={patient.phone}
-              onChange={(e) => setPatient({ ...patient, phone: e.target.value })}
+              onChange={(e) =>
+                setPatient({ ...patient, phone: e.target.value })
+              }
               required
               className="form-control"
             />
@@ -218,7 +240,9 @@ export function PrescriptionForm({ medications, onSubmit, isLoading }: Prescript
             <select
               id="gender"
               value={patient.gender}
-              onChange={(e) => setPatient({ ...patient, gender: e.target.value as any })}
+              onChange={(e) =>
+                setPatient({ ...patient, gender: e.target.value as any })
+              }
               required
               className="form-control"
             >
@@ -235,7 +259,9 @@ export function PrescriptionForm({ medications, onSubmit, isLoading }: Prescript
                 type="text"
                 placeholder="DD"
                 value={patient.birth_day}
-                onChange={(e) => setPatient({ ...patient, birth_day: e.target.value })}
+                onChange={(e) =>
+                  setPatient({ ...patient, birth_day: e.target.value })
+                }
                 maxLength={2}
                 required
                 className="form-control"
@@ -244,7 +270,9 @@ export function PrescriptionForm({ medications, onSubmit, isLoading }: Prescript
                 type="text"
                 placeholder="MM"
                 value={patient.birth_month}
-                onChange={(e) => setPatient({ ...patient, birth_month: e.target.value })}
+                onChange={(e) =>
+                  setPatient({ ...patient, birth_month: e.target.value })
+                }
                 maxLength={2}
                 required
                 className="form-control"
@@ -253,7 +281,9 @@ export function PrescriptionForm({ medications, onSubmit, isLoading }: Prescript
                 type="text"
                 placeholder="YYYY"
                 value={patient.birth_year}
-                onChange={(e) => setPatient({ ...patient, birth_year: e.target.value })}
+                onChange={(e) =>
+                  setPatient({ ...patient, birth_year: e.target.value })
+                }
                 maxLength={4}
                 required
                 className="form-control"
@@ -268,7 +298,9 @@ export function PrescriptionForm({ medications, onSubmit, isLoading }: Prescript
             type="text"
             id="address_ln1"
             value={patient.address_ln1}
-            onChange={(e) => setPatient({ ...patient, address_ln1: e.target.value })}
+            onChange={(e) =>
+              setPatient({ ...patient, address_ln1: e.target.value })
+            }
             required
             className="form-control"
           />
@@ -280,7 +312,9 @@ export function PrescriptionForm({ medications, onSubmit, isLoading }: Prescript
             type="text"
             id="address_ln2"
             value={patient.address_ln2}
-            onChange={(e) => setPatient({ ...patient, address_ln2: e.target.value })}
+            onChange={(e) =>
+              setPatient({ ...patient, address_ln2: e.target.value })
+            }
             className="form-control"
           />
         </div>
@@ -304,7 +338,9 @@ export function PrescriptionForm({ medications, onSubmit, isLoading }: Prescript
               type="text"
               id="post_code"
               value={patient.post_code}
-              onChange={(e) => setPatient({ ...patient, post_code: e.target.value })}
+              onChange={(e) =>
+                setPatient({ ...patient, post_code: e.target.value })
+              }
               required
               className="form-control"
             />
@@ -317,7 +353,9 @@ export function PrescriptionForm({ medications, onSubmit, isLoading }: Prescript
             type="text"
             id="country"
             value={patient.country}
-            onChange={(e) => setPatient({ ...patient, country: e.target.value })}
+            onChange={(e) =>
+              setPatient({ ...patient, country: e.target.value })
+            }
             required
             className="form-control"
           />
@@ -327,7 +365,7 @@ export function PrescriptionForm({ medications, onSubmit, isLoading }: Prescript
       {/* Delivery Address */}
       <div className="form-section">
         <h3>Delivery Address</h3>
-        
+
         <div className="form-group">
           <label className="checkbox-label">
             <input
@@ -347,7 +385,12 @@ export function PrescriptionForm({ medications, onSubmit, isLoading }: Prescript
                 type="text"
                 id="del_address_ln1"
                 value={deliveryAddress.address_ln1}
-                onChange={(e) => setDeliveryAddress({ ...deliveryAddress, address_ln1: e.target.value })}
+                onChange={(e) =>
+                  setDeliveryAddress({
+                    ...deliveryAddress,
+                    address_ln1: e.target.value,
+                  })
+                }
                 required
                 className="form-control"
               />
@@ -359,7 +402,12 @@ export function PrescriptionForm({ medications, onSubmit, isLoading }: Prescript
                 type="text"
                 id="del_address_ln2"
                 value={deliveryAddress.address_ln2}
-                onChange={(e) => setDeliveryAddress({ ...deliveryAddress, address_ln2: e.target.value })}
+                onChange={(e) =>
+                  setDeliveryAddress({
+                    ...deliveryAddress,
+                    address_ln2: e.target.value,
+                  })
+                }
                 className="form-control"
               />
             </div>
@@ -371,7 +419,12 @@ export function PrescriptionForm({ medications, onSubmit, isLoading }: Prescript
                   type="text"
                   id="del_city"
                   value={deliveryAddress.city}
-                  onChange={(e) => setDeliveryAddress({ ...deliveryAddress, city: e.target.value })}
+                  onChange={(e) =>
+                    setDeliveryAddress({
+                      ...deliveryAddress,
+                      city: e.target.value,
+                    })
+                  }
                   required
                   className="form-control"
                 />
@@ -383,7 +436,12 @@ export function PrescriptionForm({ medications, onSubmit, isLoading }: Prescript
                   type="text"
                   id="del_post_code"
                   value={deliveryAddress.post_code}
-                  onChange={(e) => setDeliveryAddress({ ...deliveryAddress, post_code: e.target.value })}
+                  onChange={(e) =>
+                    setDeliveryAddress({
+                      ...deliveryAddress,
+                      post_code: e.target.value,
+                    })
+                  }
                   required
                   className="form-control"
                 />
@@ -396,7 +454,12 @@ export function PrescriptionForm({ medications, onSubmit, isLoading }: Prescript
                 type="text"
                 id="del_country"
                 value={deliveryAddress.country}
-                onChange={(e) => setDeliveryAddress({ ...deliveryAddress, country: e.target.value })}
+                onChange={(e) =>
+                  setDeliveryAddress({
+                    ...deliveryAddress,
+                    country: e.target.value,
+                  })
+                }
                 required
                 className="form-control"
               />
@@ -424,7 +487,7 @@ export function PrescriptionForm({ medications, onSubmit, isLoading }: Prescript
       </div>
 
       <button type="submit" disabled={isLoading} className="btn-primary">
-        {isLoading ? 'Creating Prescription...' : 'Create Prescription'}
+        {isLoading ? "Creating Prescription..." : "Create Prescription"}
       </button>
     </form>
   );

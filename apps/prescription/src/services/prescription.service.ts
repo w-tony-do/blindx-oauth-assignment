@@ -2,13 +2,10 @@ import type {
   CreatePrescriptionRequest,
   StoredPrescription,
 } from "@repo/contracts";
-import type { Kysely } from "kysely";
-import type { Database } from "../db/database.js";
-import * as signatureRxService from "./signaturerx.service.js";
+import { $db } from "../db/database";
+import { SignatureRxPrescriptionResponse } from "../types/auth";
+import * as signatureRxService from "./signaturerx.service";
 
-/**
- * Map database row to StoredPrescription
- */
 function mapToStoredPrescription(row: any): StoredPrescription {
   return {
     id: row.id,
@@ -25,26 +22,18 @@ function mapToStoredPrescription(row: any): StoredPrescription {
   };
 }
 
-/**
- * Create and issue a prescription
- */
 export async function createPrescription(
-  db: Kysely<Database>,
   request: CreatePrescriptionRequest,
+  signatures: SignatureRxPrescriptionResponse,
 ): Promise<StoredPrescription> {
-  // Issue prescription to SignatureRx
-  const signatureRxResponse =
-    await signatureRxService.issuePrescription(request);
-
   // Store in database
-  const prescription = await db
+  const prescription = await $db()
     .insertInto("prescriptions")
     .values({
-      signaturerx_prescription_id:
-        signatureRxResponse.prescription_id || null,
+      signaturerx_prescription_id: signatures.prescription_id || null,
       patient_email: request.patient.email,
       patient_name: `${request.patient.first_name} ${request.patient.last_name}`,
-      status: signatureRxResponse.status || "Sent",
+      status: signatures.status || "Sent",
       medicines: JSON.stringify(request.medicines),
       payload: JSON.stringify(request),
     })
@@ -54,13 +43,8 @@ export async function createPrescription(
   return mapToStoredPrescription(prescription);
 }
 
-/**
- * List all prescriptions
- */
-export async function listPrescriptions(
-  db: Kysely<Database>,
-): Promise<StoredPrescription[]> {
-  const prescriptions = await db
+export async function listPrescriptions(): Promise<StoredPrescription[]> {
+  const prescriptions = await $db()
     .selectFrom("prescriptions")
     .selectAll()
     .orderBy("created_at", "desc")
@@ -73,10 +57,9 @@ export async function listPrescriptions(
  * Get prescription by ID
  */
 export async function getPrescriptionById(
-  db: Kysely<Database>,
   id: string,
 ): Promise<StoredPrescription | null> {
-  const prescription = await db
+  const prescription = await $db()
     .selectFrom("prescriptions")
     .selectAll()
     .where("id", "=", id)
@@ -89,15 +72,11 @@ export async function getPrescriptionById(
   return mapToStoredPrescription(prescription);
 }
 
-/**
- * Update prescription status (typically called by webhook handler)
- */
 export async function updatePrescriptionStatus(
-  db: Kysely<Database>,
   signaturerxPrescriptionId: string,
   status: string,
 ): Promise<void> {
-  await db
+  await $db()
     .updateTable("prescriptions")
     .set({
       status,
@@ -109,4 +88,46 @@ export async function updatePrescriptionStatus(
   console.log(
     `✅ Updated prescription ${signaturerxPrescriptionId} status to: ${status}`,
   );
+}
+
+export async function issuePrescription(
+  payload: CreatePrescriptionRequest,
+  retryOnExpiry = true,
+): Promise<SignatureRxPrescriptionResponse> {
+  const accessToken = await signatureRxService.getAccessToken();
+  const { apiUrl } = signatureRxService.getConfig();
+
+  const url = `${apiUrl}/prescriptions`;
+
+  console.log(
+    `📤 Issuing prescription to SignatureRx for patient: ${payload.patient.email}`,
+  );
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  // Handle token expiry
+  if (response.status === 401 && retryOnExpiry) {
+    console.log("🔄 Token expired mid-request, refreshing and retrying...");
+    tokenStore = null; // Force token refresh
+    return issuePrescription(payload, false); // Retry once
+  }
+
+  const responseData = await response.json();
+
+  if (!response.ok) {
+    console.error("❌ Prescription issue failed:", responseData);
+    throw new Error(
+      `Failed to issue prescription: ${response.status} ${JSON.stringify(responseData)}`,
+    );
+  }
+
+  console.log("✅ Prescription issued successfully:", responseData);
+  return responseData;
 }

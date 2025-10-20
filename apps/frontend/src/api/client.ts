@@ -1,9 +1,9 @@
-import { initClient } from '@ts-rest/core';
-import { contract } from '@repo/contracts';
+import { contract } from "@repo/contracts";
+import { initClient } from "@ts-rest/core";
 
 export const apiClient = initClient(contract, {
-  baseUrl: 'http://localhost:3001',
+  baseUrl: "http://localhost:3001",
   baseHeaders: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });

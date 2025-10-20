@@ -1,5 +1,5 @@
-import { initContract } from '@ts-rest/core';
-import { z } from 'zod';
+import { initContract } from "@ts-rest/core";
+import { z } from "zod";
 
 const c = initContract();
 
@@ -18,7 +18,7 @@ const MedicineSchema = z.object({
 });
 
 const PrescriptionMedicineSchema = z.object({
-  object: z.literal('medicine'),
+  object: z.literal("medicine"),
   id: z.number(),
   VPID: z.string(),
   APID: z.string().optional(),
@@ -31,7 +31,7 @@ const PrescriptionMedicineSchema = z.object({
 
 const DeliveryAddressSchema = z.object({
   address_ln1: z.string(),
-  address_ln2: z.string().optional().default(''),
+  address_ln2: z.string().optional().default(""),
   city: z.string(),
   post_code: z.string(),
   country: z.string(),
@@ -40,14 +40,14 @@ const DeliveryAddressSchema = z.object({
 const PatientSchema = z.object({
   first_name: z.string(),
   last_name: z.string(),
-  gender: z.enum(['male', 'female', 'other']),
+  gender: z.enum(["male", "female", "other"]),
   email: z.string().email(),
   phone: z.string(),
   birth_day: z.string(),
   birth_month: z.string(),
   birth_year: z.string(),
   address_ln1: z.string(),
-  address_ln2: z.string().optional().default(''),
+  address_ln2: z.string().optional().default(""),
   city: z.string(),
   post_code: z.string(),
   country: z.string(),
@@ -55,7 +55,7 @@ const PatientSchema = z.object({
 });
 
 const CreatePrescriptionRequestSchema = z.object({
-  action: z.literal('issueForDelivery'),
+  action: z.literal("issueForDelivery"),
   contact_id: z.number().optional().default(0),
   clinic_id: z.number(),
   aff_tag: z.string().optional(),
@@ -64,10 +64,10 @@ const CreatePrescriptionRequestSchema = z.object({
   send_sms: z.boolean().default(true),
   invoice_clinic: z.boolean().default(false),
   delivery_address: DeliveryAddressSchema,
-  prescription_id: z.string().optional().default(''),
+  prescription_id: z.string().optional().default(""),
   patient: PatientSchema,
-  notes: z.string().optional().default(''),
-  client_ref_id: z.string().optional().default(''),
+  notes: z.string().optional().default(""),
+  client_ref_id: z.string().optional().default(""),
   medicines: z.array(PrescriptionMedicineSchema),
   prescriber_ip: z.string().optional(),
 });
@@ -103,23 +103,22 @@ export const contract = c.router({
   // Medications endpoints
   medications: {
     list: {
-      method: 'GET',
-      path: '/api/medications',
+      method: "GET",
+      path: "/api/medications",
       responses: {
         200: z.object({
           meds: z.array(MedicineSchema),
           total: z.number(),
         }),
       },
-      summary: 'List available medications',
+      summary: "List available medications",
     },
   },
-  
   // Prescriptions endpoints
   prescriptions: {
     create: {
-      method: 'POST',
-      path: '/api/prescriptions/issue',
+      method: "POST",
+      path: "/api/prescriptions/issue",
       body: CreatePrescriptionRequestSchema,
       responses: {
         200: PrescriptionResponseSchema,
@@ -127,24 +126,22 @@ export const contract = c.router({
         401: z.object({ error: z.string() }),
         500: z.object({ error: z.string() }),
       },
-      summary: 'Issue a prescription for delivery',
+      summary: "Issue a prescription for delivery",
     },
-    
     list: {
-      method: 'GET',
-      path: '/api/prescriptions',
+      method: "GET",
+      path: "/api/prescriptions",
       responses: {
         200: z.object({
           prescriptions: z.array(StoredPrescriptionSchema),
           total: z.number(),
         }),
       },
-      summary: 'List all prescriptions',
+      summary: "List all prescriptions",
     },
-    
     getById: {
-      method: 'GET',
-      path: '/api/prescriptions/:id',
+      method: "GET",
+      path: "/api/prescriptions/:id",
       pathParams: z.object({
         id: z.string(),
       }),
@@ -152,39 +149,37 @@ export const contract = c.router({
         200: StoredPrescriptionSchema,
         404: z.object({ error: z.string() }),
       },
-      summary: 'Get prescription by ID',
+      summary: "Get prescription by ID",
     },
   },
-  
   // Webhooks endpoint
   webhooks: {
     signaturerx: {
-      method: 'POST',
-      path: '/api/webhooks/signaturerx',
+      method: "POST",
+      path: "/api/webhooks/signaturerx",
       body: WebhookEventSchema,
       responses: {
-        200: z.object({ 
+        200: z.object({
           received: z.boolean(),
           message: z.string(),
         }),
         400: z.object({ error: z.string() }),
       },
-      summary: 'Receive SignatureRx webhook events',
+      summary: "Receive SignatureRx webhook events",
     },
   },
-  
   // Health check
   health: {
     check: {
-      method: 'GET',
-      path: '/api/health',
+      method: "GET",
+      path: "/api/health",
       responses: {
         200: z.object({
           status: z.string(),
           timestamp: z.string(),
         }),
       },
-      summary: 'Health check endpoint',
+      summary: "Health check endpoint",
     },
   },
 });
@@ -192,7 +187,9 @@ export const contract = c.router({
 export type Contract = typeof contract;
 export type Medicine = z.infer<typeof MedicineSchema>;
 export type PrescriptionMedicine = z.infer<typeof PrescriptionMedicineSchema>;
-export type CreatePrescriptionRequest = z.infer<typeof CreatePrescriptionRequestSchema>;
+export type CreatePrescriptionRequest = z.infer<
+  typeof CreatePrescriptionRequestSchema
+>;
 export type PrescriptionResponse = z.infer<typeof PrescriptionResponseSchema>;
 export type WebhookEvent = z.infer<typeof WebhookEventSchema>;
 export type StoredPrescription = z.infer<typeof StoredPrescriptionSchema>;

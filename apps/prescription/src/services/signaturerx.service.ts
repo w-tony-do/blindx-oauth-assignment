@@ -1,45 +1,30 @@
-import type { CreatePrescriptionRequest } from "@repo/contracts";
+import { TokenStore, SignatureRxTokenResponse } from "../types/auth.js";
 
-interface TokenStore {
-  access_token: string;
-  refresh_token: string;
-  expires_at: number; // Unix timestamp
+export function getConfig() {
+  const clientId = process.env.SIGNATURERX_CLIENT_ID || "";
+  const clientSecret = process.env.SIGNATURERX_CLIENT_SECRET || "";
+  const tokenUrl =
+    process.env.SIGNATURERX_TOKEN_URL ||
+    "https://app.signaturerx.co.uk/oauth/token";
+  const apiUrl =
+    process.env.SIGNATURERX_API_URL || "https://app.signaturerx.co.uk/api";
+
+  return { clientId, clientSecret, tokenUrl, apiUrl };
 }
 
-interface SignatureRxTokenResponse {
-  access_token: string;
-  refresh_token: string;
-  expires_in: number; // seconds
-  token_type: string;
+export function resetTokenStore(): void {
+  tokenStore = null;
 }
 
-interface SignatureRxPrescriptionResponse {
-  status: string;
-  prescription_id?: string;
-  message?: string;
-  data?: any;
-}
-
-// Module-level state
-let tokenStore: TokenStore | null = null;
-const clientId = process.env.SIGNATURERX_CLIENT_ID || "";
-const clientSecret = process.env.SIGNATURERX_CLIENT_SECRET || "";
-const tokenUrl =
-  process.env.SIGNATURERX_TOKEN_URL ||
-  "https://app.signaturerx.co.uk/oauth/token";
-const apiUrl =
-  process.env.SIGNATURERX_API_URL || "https://app.signaturerx.co.uk/api";
-
-if (!clientId || !clientSecret) {
-  console.warn(
-    "⚠️  SignatureRx credentials not configured. Please set SIGNATURERX_CLIENT_ID and SIGNATURERX_CLIENT_SECRET",
-  );
-}
-
-/**
- * Fetch a new access token using client credentials
- */
 async function fetchNewToken(): Promise<void> {
+  const { clientId, clientSecret, tokenUrl } = getConfig();
+
+  if (!clientId || !clientSecret) {
+    console.warn(
+      "⚠️  SignatureRx credentials not configured. Please set SIGNATURERX_CLIENT_ID and SIGNATURERX_CLIENT_SECRET",
+    );
+  }
+
   const params = new URLSearchParams({
     grant_type: "client_credentials",
     client_id: clientId,
@@ -73,13 +58,12 @@ async function fetchNewToken(): Promise<void> {
   );
 }
 
-/**
- * Refresh the access token using the refresh token
- */
 async function refreshAccessToken(): Promise<void> {
   if (!tokenStore?.refresh_token) {
     throw new Error("No refresh token available");
   }
+
+  const { clientId, clientSecret, tokenUrl } = getConfig();
 
   const params = new URLSearchParams({
     grant_type: "refresh_token",
@@ -113,17 +97,12 @@ async function refreshAccessToken(): Promise<void> {
   console.log("✅ Token refreshed successfully");
 }
 
-/**
- * Get a valid access token, refreshing if necessary
- */
 export async function getAccessToken(): Promise<string> {
-  // Check if we have a valid token
   if (tokenStore && tokenStore.expires_at > Date.now()) {
     console.log("✅ Using cached access token");
     return tokenStore.access_token;
   }
 
-  // Check if we can refresh
   if (tokenStore?.refresh_token) {
     console.log("🔄 Refreshing access token...");
     try {
@@ -141,53 +120,6 @@ export async function getAccessToken(): Promise<string> {
   return tokenStore!.access_token;
 }
 
-/**
- * Issue a prescription for delivery
- */
-export async function issuePrescription(
-  payload: CreatePrescriptionRequest,
-  retryOnExpiry = true,
-): Promise<SignatureRxPrescriptionResponse> {
-  const accessToken = await getAccessToken();
-
-  const url = `${apiUrl}/prescriptions`;
-
-  console.log(
-    `📤 Issuing prescription to SignatureRx for patient: ${payload.patient.email}`,
-  );
-
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify(payload),
-  });
-
-  // Handle token expiry
-  if (response.status === 401 && retryOnExpiry) {
-    console.log("🔄 Token expired mid-request, refreshing and retrying...");
-    tokenStore = null; // Force token refresh
-    return issuePrescription(payload, false); // Retry once
-  }
-
-  const responseData = await response.json();
-
-  if (!response.ok) {
-    console.error("❌ Prescription issue failed:", responseData);
-    throw new Error(
-      `Failed to issue prescription: ${response.status} ${JSON.stringify(responseData)}`,
-    );
-  }
-
-  console.log("✅ Prescription issued successfully:", responseData);
-  return responseData;
-}
-
-/**
- * Check token status (for debugging)
- */
 export function getTokenStatus(): {
   hasToken: boolean;
   expiresAt: string | null;

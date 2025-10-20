@@ -3,9 +3,9 @@
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
-    "allowImportingTsExtensions": false,
     "noEmit": false
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]
 }
+
