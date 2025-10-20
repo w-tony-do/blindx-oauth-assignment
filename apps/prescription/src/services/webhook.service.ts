@@ -3,14 +3,14 @@ import * as prescriptionService from "./prescription.service";
 
 export async function handleWebhookEvent(event: WebhookEvent): Promise<void> {
   console.log(
-    `📥 Received webhook event: ${event.event_type} for prescription: ${event.prescription_id}`,
+    `📥 Received webhook event: ${event.type} for prescription: ${event.data.prescription_token}`,
   );
   console.log(event);
 
-  if (event.prescription_id && event.status) {
+  if (event.data.prescription_token && event.data.status) {
     await prescriptionService.updatePrescriptionStatus(
-      event.prescription_id,
-      event.status,
+      event.data.prescription_token as string,
+      (event.data.status as string) ?? event.data.order_status,
     );
   }
 

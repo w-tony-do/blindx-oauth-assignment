@@ -80,11 +80,9 @@ const PrescriptionResponseSchema = z.object({
 });
 
 const WebhookEventSchema = z.object({
-  event_type: z.string(),
-  prescription_id: z.string(),
-  status: z.string(),
+  object: z.string(),
+  type: z.string(),
   data: z.record(z.unknown()),
-  timestamp: z.string(),
 });
 
 const StoredPrescriptionSchema = z.object({

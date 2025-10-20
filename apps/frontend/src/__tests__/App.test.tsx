@@ -1,11 +1,11 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import App from './App';
-import { apiClient } from './api/client';
-import type { Medicine, StoredPrescription } from '@repo/contracts';
+import type { Medicine, StoredPrescription } from "@repo/contracts";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import App from "../App";
+import { apiClient } from "../api/client";
 
-vi.mock('./api/client', () => ({
+vi.mock("./api/client", () => ({
   apiClient: {
     medications: {
       list: vi.fn(),
@@ -17,31 +17,31 @@ vi.mock('./api/client', () => ({
   },
 }));
 
-describe('App', () => {
+describe("App", () => {
   const mockMedications: Medicine[] = [
     {
-      snomedId: '123456',
-      displayName: 'Paracetamol 500mg',
-      type: 'tablet',
+      snomedId: "123456",
+      displayName: "Paracetamol 500mg",
+      type: "tablet",
     },
   ];
 
   const mockPrescriptions: StoredPrescription[] = [
     {
-      id: 1,
-      signaturerx_prescription_id: 'RX123456',
-      patient_name: 'John Doe',
-      patient_email: 'john.doe@example.com',
-      status: 'ACTIVE',
+      id: "1",
+      signaturerx_prescription_id: "RX123456",
+      patient_name: "John Doe",
+      patient_email: "john.doe@example.com",
+      status: "ACTIVE",
       medicines: JSON.stringify([
         {
-          description: 'Paracetamol 500mg',
-          qty: '10',
-          directions: 'Take as directed',
+          description: "Paracetamol 500mg",
+          qty: "10",
+          directions: "Take as directed",
         },
       ]),
-      created_at: '2024-01-15T10:30:00Z',
-      updated_at: '2024-01-15T10:30:00Z',
+      created_at: "2024-01-15T10:30:00Z",
+      updated_at: "2024-01-15T10:30:00Z",
     },
   ];
 
@@ -49,7 +49,7 @@ describe('App', () => {
     vi.clearAllMocks();
   });
 
-  it('renders the application header', async () => {
+  it("renders the application header", async () => {
     vi.mocked(apiClient.medications.list).mockResolvedValue({
       status: 200,
       body: { meds: [] },
@@ -65,12 +65,14 @@ describe('App', () => {
     render(<App />);
 
     expect(
-      screen.getByText('🏥 Blinx PACO - SignatureRx Integration')
+      screen.getByText("🏥 Blinx PACO - SignatureRx Integration"),
     ).toBeInTheDocument();
-    expect(screen.getByText('Prescription Management System')).toBeInTheDocument();
+    expect(
+      screen.getByText("Prescription Management System"),
+    ).toBeInTheDocument();
   });
 
-  it('loads medications on mount', async () => {
+  it("loads medications on mount", async () => {
     vi.mocked(apiClient.medications.list).mockResolvedValue({
       status: 200,
       body: { meds: mockMedications },
@@ -90,7 +92,7 @@ describe('App', () => {
     });
   });
 
-  it('loads prescriptions on mount', async () => {
+  it("loads prescriptions on mount", async () => {
     vi.mocked(apiClient.medications.list).mockResolvedValue({
       status: 200,
       body: { meds: [] },
@@ -110,7 +112,7 @@ describe('App', () => {
     });
   });
 
-  it('displays loading state while fetching medications', async () => {
+  it("displays loading state while fetching medications", async () => {
     vi.mocked(apiClient.medications.list).mockImplementation(
       () =>
         new Promise((resolve) =>
@@ -121,9 +123,9 @@ describe('App', () => {
                 body: { meds: [] },
                 headers: new Headers(),
               } as any),
-            100
-          )
-        )
+            100,
+          ),
+        ),
     );
 
     vi.mocked(apiClient.prescriptions.list).mockResolvedValue({
@@ -134,16 +136,20 @@ describe('App', () => {
 
     render(<App />);
 
-    expect(screen.getByText('Loading medications...')).toBeInTheDocument();
+    expect(screen.getByText("Loading medications...")).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(screen.queryByText('Loading medications...')).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("Loading medications..."),
+      ).not.toBeInTheDocument();
     });
   });
 
-  it('displays error when medications fail to load', async () => {
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    
+  it("displays error when medications fail to load", async () => {
+    const consoleErrorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+
     vi.mocked(apiClient.medications.list).mockResolvedValue({
       status: 500,
       body: {} as any,
@@ -159,15 +165,19 @@ describe('App', () => {
     render(<App />);
 
     await waitFor(() => {
-      expect(screen.getByText(/Failed to load medications/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Failed to load medications/),
+      ).toBeInTheDocument();
     });
-    
+
     consoleErrorSpy.mockRestore();
   });
 
-  it('displays error when prescriptions fail to load', async () => {
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    
+  it("displays error when prescriptions fail to load", async () => {
+    const consoleErrorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+
     vi.mocked(apiClient.medications.list).mockResolvedValue({
       status: 200,
       body: { meds: [] },
@@ -183,13 +193,15 @@ describe('App', () => {
     render(<App />);
 
     await waitFor(() => {
-      expect(screen.getByText(/Failed to load prescriptions/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Failed to load prescriptions/),
+      ).toBeInTheDocument();
     });
-    
+
     consoleErrorSpy.mockRestore();
   });
 
-  it('renders PrescriptionForm when medications are loaded', async () => {
+  it("renders PrescriptionForm when medications are loaded", async () => {
     vi.mocked(apiClient.medications.list).mockResolvedValue({
       status: 200,
       body: { meds: mockMedications },
@@ -205,11 +217,13 @@ describe('App', () => {
     render(<App />);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Create Prescription' })).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: "Create Prescription" }),
+      ).toBeInTheDocument();
     });
   });
 
-  it('renders PrescriptionList with loaded prescriptions', async () => {
+  it("renders PrescriptionList with loaded prescriptions", async () => {
     vi.mocked(apiClient.medications.list).mockResolvedValue({
       status: 200,
       body: { meds: [] },
@@ -225,12 +239,12 @@ describe('App', () => {
     render(<App />);
 
     await waitFor(() => {
-      expect(screen.getByText('Prescription History')).toBeInTheDocument();
-      expect(screen.getByText('John Doe')).toBeInTheDocument();
+      expect(screen.getByText("Prescription History")).toBeInTheDocument();
+      expect(screen.getByText("John Doe")).toBeInTheDocument();
     });
   });
 
-  it('closes error alert when close button is clicked', async () => {
+  it("closes error alert when close button is clicked", async () => {
     vi.mocked(apiClient.medications.list).mockResolvedValue({
       status: 500,
       body: {} as any,
@@ -246,20 +260,24 @@ describe('App', () => {
     render(<App />);
 
     await waitFor(() => {
-      expect(screen.getByText(/Failed to load medications/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Failed to load medications/),
+      ).toBeInTheDocument();
     });
 
-    const closeButton = screen.getAllByRole('button', { name: '×' })[0];
+    const closeButton = screen.getAllByRole("button", { name: "×" })[0];
     closeButton.click();
 
     await waitFor(() => {
-      expect(screen.queryByText(/Failed to load medications/)).not.toBeInTheDocument();
+      expect(
+        screen.queryByText(/Failed to load medications/),
+      ).not.toBeInTheDocument();
     });
   });
 
-  it('displays success message after successful prescription creation', async () => {
+  it("displays success message after successful prescription creation", async () => {
     const user = userEvent.setup();
-    
+
     vi.mocked(apiClient.medications.list).mockResolvedValue({
       status: 200,
       body: { meds: mockMedications },
@@ -275,35 +293,41 @@ describe('App', () => {
 
     vi.mocked(apiClient.prescriptions.create).mockResolvedValue({
       status: 200,
-      body: { prescription_id: 'RX999', id: 999 },
+      body: { prescription_id: "RX999", id: 999 },
       headers: new Headers(),
     } as any);
 
     render(<App />);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Create Prescription' })).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: "Create Prescription" }),
+      ).toBeInTheDocument();
     });
 
     // Select medication
-    const medicationSelect = screen.getByLabelText('Medication *');
+    const medicationSelect = screen.getByLabelText("Medication *");
     await user.selectOptions(medicationSelect, mockMedications[0].snomedId);
 
     // Submit form
-    const submitButton = screen.getByRole('button', { name: 'Create Prescription' });
+    const submitButton = screen.getByRole("button", {
+      name: "Create Prescription",
+    });
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/Prescription created successfully/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Prescription created successfully/),
+      ).toBeInTheDocument();
     });
 
     // Verify prescriptions list was reloaded
     expect(listMock).toHaveBeenCalledTimes(2);
   });
 
-  it('handles API error during prescription creation', async () => {
+  it("handles API error during prescription creation", async () => {
     const user = userEvent.setup();
-    
+
     vi.mocked(apiClient.medications.list).mockResolvedValue({
       status: 200,
       body: { meds: mockMedications },
@@ -318,30 +342,36 @@ describe('App', () => {
 
     vi.mocked(apiClient.prescriptions.create).mockResolvedValue({
       status: 400,
-      body: { error: 'Invalid data' },
+      body: { error: "Invalid data" },
       headers: new Headers(),
     } as any);
 
     render(<App />);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Create Prescription' })).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: "Create Prescription" }),
+      ).toBeInTheDocument();
     });
 
     // Select medication
-    const medicationSelect = screen.getByLabelText('Medication *');
+    const medicationSelect = screen.getByLabelText("Medication *");
     await user.selectOptions(medicationSelect, mockMedications[0].snomedId);
 
     // Submit form
-    const submitButton = screen.getByRole('button', { name: 'Create Prescription' });
+    const submitButton = screen.getByRole("button", {
+      name: "Create Prescription",
+    });
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/Failed to create prescription: Invalid data/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Failed to create prescription: Invalid data/),
+      ).toBeInTheDocument();
     });
   });
 
-  it('displays loading state in PrescriptionList initially', async () => {
+  it("displays loading state in PrescriptionList initially", async () => {
     vi.mocked(apiClient.medications.list).mockResolvedValue({
       status: 200,
       body: { meds: [] },
@@ -358,21 +388,23 @@ describe('App', () => {
                 body: { prescriptions: [] },
                 headers: new Headers(),
               } as any),
-            100
-          )
-        )
+            100,
+          ),
+        ),
     );
 
     render(<App />);
 
-    expect(screen.getByText('Loading prescriptions...')).toBeInTheDocument();
+    expect(screen.getByText("Loading prescriptions...")).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(screen.queryByText('Loading prescriptions...')).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("Loading prescriptions..."),
+      ).not.toBeInTheDocument();
     });
   });
 
-  it('renders main container with correct structure', async () => {
+  it("renders main container with correct structure", async () => {
     vi.mocked(apiClient.medications.list).mockResolvedValue({
       status: 200,
       body: { meds: [] },
@@ -388,14 +420,14 @@ describe('App', () => {
     const { container } = render(<App />);
 
     await waitFor(() => {
-      const appMain = container.querySelector('.app-main');
+      const appMain = container.querySelector(".app-main");
       expect(appMain).toBeInTheDocument();
     });
   });
 
-  it('handles network error during prescription creation', async () => {
+  it("handles network error during prescription creation", async () => {
     const user = userEvent.setup();
-    
+
     vi.mocked(apiClient.medications.list).mockResolvedValue({
       status: 200,
       body: { meds: mockMedications },
@@ -409,31 +441,37 @@ describe('App', () => {
     } as any);
 
     vi.mocked(apiClient.prescriptions.create).mockRejectedValue(
-      new Error('Network error')
+      new Error("Network error"),
     );
 
     render(<App />);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Create Prescription' })).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: "Create Prescription" }),
+      ).toBeInTheDocument();
     });
 
     // Select medication
-    const medicationSelect = screen.getByLabelText('Medication *');
+    const medicationSelect = screen.getByLabelText("Medication *");
     await user.selectOptions(medicationSelect, mockMedications[0].snomedId);
 
     // Submit form
-    const submitButton = screen.getByRole('button', { name: 'Create Prescription' });
+    const submitButton = screen.getByRole("button", {
+      name: "Create Prescription",
+    });
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/Failed to create prescription: Network error/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Failed to create prescription: Network error/),
+      ).toBeInTheDocument();
     });
   });
 
-  it('handles 401 error during prescription creation', async () => {
+  it("handles 401 error during prescription creation", async () => {
     const user = userEvent.setup();
-    
+
     vi.mocked(apiClient.medications.list).mockResolvedValue({
       status: 200,
       body: { meds: mockMedications },
@@ -448,32 +486,38 @@ describe('App', () => {
 
     vi.mocked(apiClient.prescriptions.create).mockResolvedValue({
       status: 401,
-      body: { error: 'Unauthorized' },
+      body: { error: "Unauthorized" },
       headers: new Headers(),
     } as any);
 
     render(<App />);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Create Prescription' })).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: "Create Prescription" }),
+      ).toBeInTheDocument();
     });
 
     // Select medication
-    const medicationSelect = screen.getByLabelText('Medication *');
+    const medicationSelect = screen.getByLabelText("Medication *");
     await user.selectOptions(medicationSelect, mockMedications[0].snomedId);
 
     // Submit form
-    const submitButton = screen.getByRole('button', { name: 'Create Prescription' });
+    const submitButton = screen.getByRole("button", {
+      name: "Create Prescription",
+    });
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/Failed to create prescription: Unauthorized/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Failed to create prescription: Unauthorized/),
+      ).toBeInTheDocument();
     });
   });
 
-  it('handles 500 error during prescription creation', async () => {
+  it("handles 500 error during prescription creation", async () => {
     const user = userEvent.setup();
-    
+
     vi.mocked(apiClient.medications.list).mockResolvedValue({
       status: 200,
       body: { meds: mockMedications },
@@ -488,32 +532,38 @@ describe('App', () => {
 
     vi.mocked(apiClient.prescriptions.create).mockResolvedValue({
       status: 500,
-      body: { error: 'Server error' },
+      body: { error: "Server error" },
       headers: new Headers(),
     } as any);
 
     render(<App />);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Create Prescription' })).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: "Create Prescription" }),
+      ).toBeInTheDocument();
     });
 
     // Select medication
-    const medicationSelect = screen.getByLabelText('Medication *');
+    const medicationSelect = screen.getByLabelText("Medication *");
     await user.selectOptions(medicationSelect, mockMedications[0].snomedId);
 
     // Submit form
-    const submitButton = screen.getByRole('button', { name: 'Create Prescription' });
+    const submitButton = screen.getByRole("button", {
+      name: "Create Prescription",
+    });
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/Failed to create prescription: Server error/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Failed to create prescription: Server error/),
+      ).toBeInTheDocument();
     });
   });
 
-  it('displays success alert with close functionality', async () => {
+  it("displays success alert with close functionality", async () => {
     const user = userEvent.setup();
-    
+
     vi.mocked(apiClient.medications.list).mockResolvedValue({
       status: 200,
       body: { meds: mockMedications },
@@ -528,47 +578,57 @@ describe('App', () => {
 
     vi.mocked(apiClient.prescriptions.create).mockResolvedValue({
       status: 200,
-      body: { prescription_id: 'RX999', id: 999 },
+      body: { prescription_id: "RX999", id: 999 },
       headers: new Headers(),
     } as any);
 
     render(<App />);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Create Prescription' })).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: "Create Prescription" }),
+      ).toBeInTheDocument();
     });
 
     // Select medication
-    const medicationSelect = screen.getByLabelText('Medication *');
+    const medicationSelect = screen.getByLabelText("Medication *");
     await user.selectOptions(medicationSelect, mockMedications[0].snomedId);
 
     // Submit form
-    const submitButton = screen.getByRole('button', { name: 'Create Prescription' });
+    const submitButton = screen.getByRole("button", {
+      name: "Create Prescription",
+    });
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/Prescription created successfully/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Prescription created successfully/),
+      ).toBeInTheDocument();
     });
 
     // Close success alert
-    const closeButtons = screen.getAllByRole('button', { name: '×' });
-    const successCloseButton = closeButtons.find(btn => 
-      btn.closest('.alert-success')
+    const closeButtons = screen.getAllByRole("button", { name: "×" });
+    const successCloseButton = closeButtons.find((btn) =>
+      btn.closest(".alert-success"),
     );
-    
+
     if (successCloseButton) {
       await user.click(successCloseButton);
       await waitFor(() => {
-        expect(screen.queryByText(/Prescription created successfully/)).not.toBeInTheDocument();
+        expect(
+          screen.queryByText(/Prescription created successfully/),
+        ).not.toBeInTheDocument();
       });
     }
   });
 
-  it('handles exception when loading medications', async () => {
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    
+  it("handles exception when loading medications", async () => {
+    const consoleErrorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+
     vi.mocked(apiClient.medications.list).mockRejectedValue(
-      new Error('Network error')
+      new Error("Network error"),
     );
 
     vi.mocked(apiClient.prescriptions.list).mockResolvedValue({
@@ -580,16 +640,23 @@ describe('App', () => {
     render(<App />);
 
     await waitFor(() => {
-      expect(screen.getByText(/Failed to load medications/)).toBeInTheDocument();
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading medications:', expect.any(Error));
+      expect(
+        screen.getByText(/Failed to load medications/),
+      ).toBeInTheDocument();
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Error loading medications:",
+        expect.any(Error),
+      );
     });
-    
+
     consoleErrorSpy.mockRestore();
   });
 
-  it('handles exception when loading prescriptions', async () => {
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    
+  it("handles exception when loading prescriptions", async () => {
+    const consoleErrorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+
     vi.mocked(apiClient.medications.list).mockResolvedValue({
       status: 200,
       body: { meds: [] },
@@ -597,16 +664,21 @@ describe('App', () => {
     } as any);
 
     vi.mocked(apiClient.prescriptions.list).mockRejectedValue(
-      new Error('Database error')
+      new Error("Database error"),
     );
 
     render(<App />);
 
     await waitFor(() => {
-      expect(screen.getByText(/Failed to load prescriptions/)).toBeInTheDocument();
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading prescriptions:', expect.any(Error));
+      expect(
+        screen.getByText(/Failed to load prescriptions/),
+      ).toBeInTheDocument();
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Error loading prescriptions:",
+        expect.any(Error),
+      );
     });
-    
+
     consoleErrorSpy.mockRestore();
   });
 });

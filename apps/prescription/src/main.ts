@@ -3,7 +3,7 @@ import "dotenv/config";
 import cors from "@fastify/cors";
 import { initServer } from "@ts-rest/fastify";
 import Fastify from "fastify";
-import { $db } from "./db/database";
+import { $db } from "./libs/db/database";
 import { redisClient } from "./libs/redis";
 import { router } from "./router";
 import {
@@ -40,13 +40,11 @@ async function main() {
     console.log(`\n🚀 Server running on http://localhost:${PORT}`);
     console.log(`📚 API endpoints available at http://localhost:${PORT}/api`);
 
-    // Start the token refresh cron job
     startTokenRefreshCron();
   } catch (err) {
     app.log.error(err);
   }
 
-  // Graceful shutdown
   const shutdown = async (signal: string) => {
     console.log(`\n${signal} received, shutting down gracefully...`);
     stopTokenRefreshCron();

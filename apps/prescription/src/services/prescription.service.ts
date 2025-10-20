@@ -2,7 +2,7 @@ import type {
   CreatePrescriptionRequest,
   StoredPrescription,
 } from "@repo/contracts";
-import { $db } from "../db/database";
+import { $db } from "../libs/db/database";
 import { SignatureRxPrescriptionResponse } from "../types/auth";
 import * as signatureRxService from "./signaturerx.service";
 import { mockPrescription } from "../helpers/mock-api";
@@ -27,7 +27,6 @@ export async function createPrescription(
   request: CreatePrescriptionRequest,
   signatures: SignatureRxPrescriptionResponse,
 ): Promise<StoredPrescription> {
-  // Store in database
   const prescription = await $db()
     .insertInto("prescriptions")
     .values({
@@ -54,9 +53,6 @@ export async function listPrescriptions(): Promise<StoredPrescription[]> {
   return prescriptions.map(mapToStoredPrescription);
 }
 
-/**
- * Get prescription by ID
- */
 export async function getPrescriptionById(
   id: string,
 ): Promise<StoredPrescription | null> {
