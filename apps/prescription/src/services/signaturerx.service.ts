@@ -1,22 +1,16 @@
+import { REDIS_KEYS, redisClient } from "../libs/redis";
 import { SignatureRxTokenResponse, TokenStore } from "../types/auth";
-import { redisClient, REDIS_KEYS } from "../libs/redis";
 
 export function getConfig() {
   const clientId = process.env.SIGNATURERX_CLIENT_ID || "";
   const clientSecret = process.env.SIGNATURERX_CLIENT_SECRET || "";
-  const tokenUrl =
-    process.env.SIGNATURERX_TOKEN_URL ||
-    "https://app.signaturerx.co.uk/oauth/token";
-  const apiUrl =
-    process.env.SIGNATURERX_API_URL || "https://app.signaturerx.co.uk/api";
+  const signatureRxBaseUrl =
+    process.env.SIGNATURERX_BASE_URL || "https://app.signaturerx.co.uk/api/v1";
 
-  return { clientId, clientSecret, tokenUrl, apiUrl };
+  return { clientId, clientSecret, signatureRxBaseUrl };
 }
 
-/**
- * Get token from Redis
- */
-async function getTokenFromRedis(): Promise<TokenStore | null> {
+export async function getTokenFromRedis(): Promise<TokenStore | null> {
   try {
     const tokenJson = await redisClient.get(REDIS_KEYS.SIGNATURERX_TOKEN);
     if (!tokenJson) {
@@ -29,9 +23,6 @@ async function getTokenFromRedis(): Promise<TokenStore | null> {
   }
 }
 
-/**
- * Save token to Redis
- */
 async function saveTokenToRedis(tokenStore: TokenStore): Promise<void> {
   try {
     const ttl = Math.max(
@@ -49,9 +40,6 @@ async function saveTokenToRedis(tokenStore: TokenStore): Promise<void> {
   }
 }
 
-/**
- * Delete token from Redis
- */
 async function deleteTokenFromRedis(): Promise<void> {
   try {
     await redisClient.del(REDIS_KEYS.SIGNATURERX_TOKEN);
@@ -64,8 +52,8 @@ export async function resetTokenStore(): Promise<void> {
   await deleteTokenFromRedis();
 }
 
-async function fetchNewToken(): Promise<void> {
-  const { clientId, clientSecret, tokenUrl } = getConfig();
+async function fetchNewToken(): Promise<SignatureRxTokenResponse> {
+  const { clientId, clientSecret, signatureRxBaseUrl } = getConfig();
 
   if (!clientId || !clientSecret) {
     console.warn(
@@ -79,10 +67,10 @@ async function fetchNewToken(): Promise<void> {
     client_secret: clientSecret,
   });
 
-  const response = await fetch(tokenUrl, {
+  const response = await fetch(`${signatureRxBaseUrl}/oauth/token`, {
     method: "POST",
     headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
+      "Content-Type": "application/json",
     },
     body: params.toString(),
   });
@@ -97,7 +85,6 @@ async function fetchNewToken(): Promise<void> {
 
   const tokenStore: TokenStore = {
     access_token: data.access_token,
-    refresh_token: data.refresh_token,
     expires_at: Date.now() + data.expires_in * 1000 - 60000, // Subtract 1 minute for safety
   };
 
@@ -106,30 +93,21 @@ async function fetchNewToken(): Promise<void> {
   console.log(
     `✅ Token fetched successfully, expires in ${data.expires_in} seconds`,
   );
+
+  return data;
 }
 
-async function refreshAccessToken(): Promise<void> {
-  const tokenStore = await getTokenFromRedis();
+async function fetchSignatureRxRefreshToken(
+  nearlyExpiredToken: string,
+): Promise<SignatureRxTokenResponse> {
+  const { signatureRxBaseUrl } = getConfig();
 
-  if (!tokenStore?.refresh_token) {
-    throw new Error("No refresh token available");
-  }
-
-  const { clientId, clientSecret, tokenUrl } = getConfig();
-
-  const params = new URLSearchParams({
-    grant_type: "refresh_token",
-    refresh_token: tokenStore.refresh_token,
-    client_id: clientId,
-    client_secret: clientSecret,
-  });
-
-  const response = await fetch(tokenUrl, {
+  const response = await fetch(`${signatureRxBaseUrl}/refresh`, {
     method: "POST",
     headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
+      "Content-Type": "application/json",
+      authorization: `Bearer ${nearlyExpiredToken}`,
     },
-    body: params.toString(),
   });
 
   if (!response.ok) {
@@ -142,40 +120,42 @@ async function refreshAccessToken(): Promise<void> {
 
   const newTokenStore: TokenStore = {
     access_token: data.access_token,
-    refresh_token: data.refresh_token,
     expires_at: Date.now() + data.expires_in * 1000 - 60000,
   };
 
   await saveTokenToRedis(newTokenStore);
 
   console.log("✅ Token refreshed successfully");
+
+  return data;
+}
+
+export async function refreshNewToken(): Promise<SignatureRxTokenResponse> {
+  const tokenStore = await getTokenFromRedis();
+
+  if (!tokenStore) {
+    console.log("🔑 No token found, fetching new token...");
+    return fetchNewToken();
+  }
+
+  try {
+    console.log("🔄 Refreshing token using refresh token...");
+    return fetchSignatureRxRefreshToken(tokenStore.access_token);
+  } catch (error) {
+    console.error("❌ Token refresh failed, fetching new token:", error);
+    // Fall through to fetch new token
+    return fetchNewToken();
+  }
 }
 
 export async function getAccessToken(): Promise<string> {
   const tokenStore = await getTokenFromRedis();
-
   if (tokenStore && tokenStore.expires_at > Date.now()) {
     console.log("✅ Using cached access token from Redis");
     return tokenStore.access_token;
   }
 
-  if (tokenStore?.refresh_token) {
-    console.log("🔄 Refreshing access token...");
-    try {
-      await refreshAccessToken();
-      const refreshedToken = await getTokenFromRedis();
-      return refreshedToken!.access_token;
-    } catch (error) {
-      console.error("❌ Token refresh failed, fetching new token");
-      // Fall through to get new token
-    }
-  }
-
-  // Get new token
-  console.log("🔑 Fetching new access token...");
-  await fetchNewToken();
-  const newToken = await getTokenFromRedis();
-  return newToken!.access_token;
+  return (await refreshNewToken()).access_token;
 }
 
 export async function getTokenStatus(): Promise<{

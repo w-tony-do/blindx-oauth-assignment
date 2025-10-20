@@ -95,9 +95,9 @@ export async function issuePrescription(
   retryOnExpiry = true,
 ): Promise<SignatureRxPrescriptionResponse> {
   const accessToken = await signatureRxService.getAccessToken();
-  const { apiUrl } = signatureRxService.getConfig();
+  const { signatureRxBaseUrl } = signatureRxService.getConfig();
 
-  const url = `${apiUrl}/prescriptions`;
+  const url = `${signatureRxBaseUrl}/prescriptions`;
 
   console.log(
     `📤 Issuing prescription to SignatureRx for patient: ${payload.patient.email}`,

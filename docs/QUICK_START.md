@@ -28,18 +28,21 @@ docker-compose up -d
 ### 3. Configure Environment (1 min)
 
 **Backend:**
+
 ```bash
-cd apps/backend
+cd apps/prescription
 cp .env.example .env
 ```
 
 Edit `.env` and add your SignatureRx credentials:
+
 ```env
 SIGNATURERX_CLIENT_ID=your_client_id
 SIGNATURERX_CLIENT_SECRET=your_client_secret
 ```
 
 **Frontend:**
+
 ```bash
 cd apps/frontend
 cp .env.example .env
@@ -56,6 +59,7 @@ pnpm db:migrate
 ### 5. Start Servers (30 seconds)
 
 From root directory:
+
 ```bash
 pnpm dev
 ```
@@ -63,6 +67,7 @@ pnpm dev
 ### 6. Test It! (1 min)
 
 **Backend:**
+
 ```bash
 curl http://localhost:3001/api/health
 ```
@@ -71,6 +76,7 @@ curl http://localhost:3001/api/health
 Open browser: http://localhost:3000
 
 **Create a Prescription:**
+
 1. Select "Sildenafil 25mg tablets" from dropdown
 2. Click "Create Prescription"
 3. See it appear in the list!
@@ -101,16 +107,19 @@ cd apps/backend && docker-compose down
 ## 🔍 Quick Test
 
 ### Test Health Endpoint
+
 ```bash
 curl http://localhost:3001/api/health
 ```
 
 ### Test Medications List
+
 ```bash
 curl http://localhost:3001/api/medications
 ```
 
 ### Test Prescription Creation
+
 ```bash
 curl -X POST http://localhost:3001/api/prescriptions/issue \
   -H "Content-Type: application/json" \
@@ -157,11 +166,13 @@ curl -X POST http://localhost:3001/api/prescriptions/issue \
 ## 🐛 Quick Troubleshooting
 
 ### Port 3001 in use?
+
 ```bash
 lsof -ti:3001 | xargs kill -9
 ```
 
 ### Database connection failed?
+
 ```bash
 cd apps/backend
 docker-compose down
@@ -169,12 +180,14 @@ docker-compose up -d
 ```
 
 ### Module not found?
+
 ```bash
 pnpm install
 cd packages/contracts && pnpm build
 ```
 
 ### Fresh start?
+
 ```bash
 cd apps/backend
 docker-compose down -v
@@ -189,9 +202,7 @@ pnpm dev
 ## 📚 Next Steps
 
 1. **Read README.md** for full documentation
-2. **Check SETUP.md** for detailed setup
-3. **Review API_TESTING.md** for API examples
-4. **Explore IMPLEMENTATION_SUMMARY.md** for technical details
+2. **Review API_TESTING.md** for API examples
 
 ---
 
@@ -211,7 +222,7 @@ After `pnpm dev`:
 ```
 blindx/
 ├── apps/
-│   ├── backend/      # Fastify API with OAuth
+│   ├── prescription/      # Fastify API with OAuth
 │   └── frontend/     # React UI
 ├── packages/
 │   └── contracts/    # Shared types
