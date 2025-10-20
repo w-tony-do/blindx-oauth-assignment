@@ -17,12 +17,13 @@ services:
 
   redis:
     image: redis:7-alpine
-    expose:
-      - 6379
+    command: redis-server --requirepass blinx_redis_password
+    ports:
+      - "6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "blinx_redis_password", "ping"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -39,7 +40,7 @@ services:
       NODE_ENV: production
       PORT: 3001
       DATABASE_URL: postgresql://blinx:blinx_password@postgres:5432/blinx_signaturerx
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: redis://:blinx_redis_password@redis:6379
       SIGNATURERX_CLIENT_ID: ${SIGNATURERX_CLIENT_ID}
       SIGNATURERX_CLIENT_SECRET: ${SIGNATURERX_CLIENT_SECRET}
       SIGNATURERX_BASE_URL: ${SIGNATURERX_BASE_URL:-https://app.signaturerx.co.uk}
