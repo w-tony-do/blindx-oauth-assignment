@@ -1,7 +1,9 @@
 # Blinx SignatureRx OAuth Integration
 
 Live Demo:
+
 [API](https://blindx-api.preseo.dev)
+
 [Front End Site](https://blindx-assignment-frontend.vercel.app)
 
 A comprehensive OAuth 2.0 Client Credentials integration prototype between the Blinx PACO platform and SignatureRx API, demonstrating secure authentication, token management, and prescription issuance capabilities.
