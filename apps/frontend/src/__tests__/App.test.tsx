@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "../App";
 import { apiClient } from "../api/client";
 
-vi.mock("./api/client", () => ({
+vi.mock("../api/client", () => ({
   apiClient: {
     medications: {
       list: vi.fn(),

@@ -5,6 +5,8 @@ import { mockTokenResponse } from "./setup";
 
 describe("SignatureRx Service with Redis", () => {
   beforeEach(async () => {
+    // Disable mock mode for these tests
+    process.env.SIGNATURERX_MOCK = "false";
     await signatureRxService.resetTokenStore();
     await redisClient.flushdb();
     vi.clearAllMocks();
@@ -32,7 +34,7 @@ describe("SignatureRx Service with Redis", () => {
 
       const parsed = JSON.parse(storedToken!);
       expect(parsed.access_token).toBe(mockTokenResponse.access_token);
-      expect(parsed.refresh_token).toBe(mockTokenResponse.refresh_token);
+      expect(parsed.expires_at).toBeDefined();
     });
 
     it("should return cached token from Redis if still valid", async () => {
@@ -85,10 +87,12 @@ describe("SignatureRx Service with Redis", () => {
 
       expect(newToken).toBe("refreshed_access_token");
       expect(fetch).toHaveBeenCalledWith(
-        expect.any(String),
+        expect.stringContaining("/api/v1/refresh"),
         expect.objectContaining({
           method: "POST",
-          body: expect.stringContaining("grant_type=refresh_token"),
+          headers: expect.objectContaining({
+            authorization: expect.stringContaining("Bearer"),
+          }),
         }),
       );
     });
@@ -263,7 +267,8 @@ describe("SignatureRx Service with Redis", () => {
 
       expect(config).toHaveProperty("clientId");
       expect(config).toHaveProperty("clientSecret");
-      expect(config).toHaveProperty("tokenUrl");
+      expect(config).toHaveProperty("signatureRxBaseUrl");
+      expect(config).toHaveProperty("isMock");
     });
 
     it("should use environment variables", () => {

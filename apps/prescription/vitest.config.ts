@@ -1,4 +1,8 @@
+import { config } from 'dotenv';
 import { defineConfig } from 'vitest/config';
+
+// Load environment variables before running tests
+config();
 
 export default defineConfig({
   test: {
@@ -15,5 +19,6 @@ export default defineConfig({
         singleFork: true,
       },
     },
+    setupFiles: ['./src/__tests__/setup.ts'],
   },
 });

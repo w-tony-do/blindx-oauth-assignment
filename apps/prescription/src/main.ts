@@ -28,7 +28,7 @@ async function main() {
   });
 
   await app.register(cors, {
-    origin: true, // Allow all origins in development
+    origin: true,
     credentials: true,
   });
   const s = initServer();

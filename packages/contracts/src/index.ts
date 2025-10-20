@@ -67,7 +67,9 @@ const CreatePrescriptionRequestSchema = z.object({
   patient: PatientSchema,
   notes: z.string().optional().default(""),
   client_ref_id: z.string().optional().default(""),
-  medicines: z.array(PrescriptionMedicineSchema),
+  medicines: z
+    .array(PrescriptionMedicineSchema)
+    .min(1, "At least one medicine is required"),
   prescriber_ip: z.string().optional(),
 });
 

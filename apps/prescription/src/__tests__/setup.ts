@@ -1,6 +1,10 @@
+import { config } from "dotenv";
 import { afterAll, beforeAll, beforeEach } from "vitest";
 import { redisClient } from "../libs/redis";
 import { $db } from "../libs/db/database";
+
+// Load environment variables from .env file
+config();
 
 // Setup test environment variables
 process.env.SIGNATURERX_CLIENT_ID = "test_client_id";

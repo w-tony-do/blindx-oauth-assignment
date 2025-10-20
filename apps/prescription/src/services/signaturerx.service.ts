@@ -98,35 +98,40 @@ async function fetchNewToken(): Promise<SignatureRxTokenResponse> {
 
 async function fetchSignatureRxRefreshToken(
   nearlyExpiredToken: string,
-): Promise<SignatureRxTokenResponse> {
+): Promise<SignatureRxTokenResponse | null> {
   const { signatureRxBaseUrl } = getConfig();
 
-  const response = await fetch(`${signatureRxBaseUrl}/api/v1/refresh`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      authorization: `Bearer ${nearlyExpiredToken}`,
-    },
-  });
+  try {
+    const response = await fetch(`${signatureRxBaseUrl}/api/v1/refresh`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        authorization: `Bearer ${nearlyExpiredToken}`,
+      },
+    });
 
-  if (!response.ok) {
-    const error = await response.text();
-    console.error("❌ Token refresh failed:", error);
-    throw new Error(`Failed to refresh token: ${response.status}`);
+    if (!response.ok) {
+      const error = await response.text();
+      console.error("❌ Token refresh failed:", error);
+      return null;
+    }
+
+    const data: SignatureRxTokenResponse = await response.json();
+
+    const newTokenStore: TokenStore = {
+      access_token: data.access_token,
+      expires_at: Date.now() + data.expires_in * 1000 - 60000,
+    };
+
+    await saveTokenToRedis(newTokenStore);
+
+    console.log("✅ Token refreshed successfully");
+
+    return data;
+  } catch (error) {
+    console.error("❌ Token refresh exception:", error);
+    return null;
   }
-
-  const data: SignatureRxTokenResponse = await response.json();
-
-  const newTokenStore: TokenStore = {
-    access_token: data.access_token,
-    expires_at: Date.now() + data.expires_in * 1000 - 60000,
-  };
-
-  await saveTokenToRedis(newTokenStore);
-
-  console.log("✅ Token refreshed successfully");
-
-  return data;
 }
 
 export async function refreshNewToken(): Promise<SignatureRxTokenResponse> {
@@ -140,14 +145,17 @@ export async function refreshNewToken(): Promise<SignatureRxTokenResponse> {
     return fetchNewToken();
   }
 
-  try {
-    console.log("🔄 Refreshing token using refresh token...");
-    return fetchSignatureRxRefreshToken(tokenStore.access_token);
-  } catch (error) {
-    console.error("❌ Token refresh failed, fetching new token:", error);
-    // Fall through to fetch new token
-    return fetchNewToken();
+  console.log("🔄 Refreshing token using refresh token...");
+  const refreshedToken = await fetchSignatureRxRefreshToken(
+    tokenStore.access_token,
+  );
+
+  if (refreshedToken) {
+    return refreshedToken;
   }
+
+  console.log("🔑 Refresh failed, fetching new token...");
+  return fetchNewToken();
 }
 
 export async function getAccessToken(): Promise<string> {

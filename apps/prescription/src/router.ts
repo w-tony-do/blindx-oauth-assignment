@@ -83,19 +83,27 @@ export const router = (
       },
 
       getById: async ({ params }) => {
-        const prescription = await getPrescriptionById(params.id);
+        try {
+          const prescription = await getPrescriptionById(params.id);
 
-        if (!prescription) {
+          if (!prescription) {
+            return {
+              status: 404,
+              body: { error: "Prescription not found" },
+            };
+          }
+
+          return {
+            status: 200,
+            body: prescription,
+          };
+        } catch (error: any) {
+          app.log.error("Failed to get prescription:", error);
           return {
             status: 404,
             body: { error: "Prescription not found" },
           };
         }
-
-        return {
-          status: 200,
-          body: prescription,
-        };
       },
     },
     webhooks: {

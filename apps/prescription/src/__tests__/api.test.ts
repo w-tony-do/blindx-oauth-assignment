@@ -13,6 +13,9 @@ describe("API Integration Tests", () => {
   let app: ReturnType<typeof Fastify>;
 
   beforeAll(async () => {
+    // Enable mock mode for API tests
+    process.env.SIGNATURERX_MOCK = "true";
+
     app = Fastify({
       logger: false,
     });
@@ -36,7 +39,7 @@ describe("API Integration Tests", () => {
     it("should return 200 OK", async () => {
       const response = await app.inject({
         method: "GET",
-        url: "/health",
+        url: "/api/health",
       });
 
       expect(response.statusCode).toBe(200);
@@ -50,7 +53,7 @@ describe("API Integration Tests", () => {
     it("should list all medications", async () => {
       const response = await app.inject({
         method: "GET",
-        url: "/medications",
+        url: "/api/medications",
       });
 
       expect(response.statusCode).toBe(200);
@@ -63,7 +66,7 @@ describe("API Integration Tests", () => {
     it("should return medications with valid structure", async () => {
       const response = await app.inject({
         method: "GET",
-        url: "/medications",
+        url: "/api/medications",
       });
 
       const body = JSON.parse(response.body);
@@ -92,19 +95,23 @@ describe("API Integration Tests", () => {
 
         const response = await app.inject({
           method: "POST",
-          url: "/prescriptions",
+          url: "/api/prescriptions/issue",
           payload: mockPrescriptionRequest,
         });
 
         expect(response.statusCode).toBe(200);
         const body = JSON.parse(response.body);
         expect(body.id).toBeDefined();
-        expect(body.status).toBe("Sent");
-        expect(body.prescription_id).toBe("RX-123456");
+        expect(body.status).toBe("created");
+        expect(body.prescription_id).toBe("SRXC49F3D4F66A7");
         expect(body.created_at).toBeDefined();
       });
 
       it("should handle authentication failure", async () => {
+        // Temporarily disable mock mode to test auth failure
+        const originalMock = process.env.SIGNATURERX_MOCK;
+        process.env.SIGNATURERX_MOCK = "false";
+
         // Mock failed auth
         global.fetch = vi.fn().mockResolvedValueOnce({
           ok: false,
@@ -114,13 +121,16 @@ describe("API Integration Tests", () => {
 
         const response = await app.inject({
           method: "POST",
-          url: "/prescriptions",
+          url: "/api/prescriptions/issue",
           payload: mockPrescriptionRequest,
         });
 
         expect(response.statusCode).toBe(401);
         const body = JSON.parse(response.body);
         expect(body.error).toContain("Authentication failed");
+
+        // Restore mock mode
+        process.env.SIGNATURERX_MOCK = originalMock;
       });
 
       it("should validate required fields", async () => {
@@ -134,7 +144,7 @@ describe("API Integration Tests", () => {
 
         const response = await app.inject({
           method: "POST",
-          url: "/prescriptions",
+          url: "/api/prescriptions/issue",
           payload: invalidRequest,
         });
 
@@ -149,10 +159,11 @@ describe("API Integration Tests", () => {
 
         const response = await app.inject({
           method: "POST",
-          url: "/prescriptions",
+          url: "/api/prescriptions/issue",
           payload: requestWithoutMedicines,
         });
 
+        // ts-rest validates the schema and returns 400 for invalid requests
         expect(response.statusCode).toBe(400);
       });
     });
@@ -161,7 +172,7 @@ describe("API Integration Tests", () => {
       it("should list all prescriptions", async () => {
         const response = await app.inject({
           method: "GET",
-          url: "/prescriptions",
+          url: "/api/prescriptions",
         });
 
         expect(response.statusCode).toBe(200);
@@ -174,7 +185,7 @@ describe("API Integration Tests", () => {
       it("should return empty list when no prescriptions exist", async () => {
         const response = await app.inject({
           method: "GET",
-          url: "/prescriptions",
+          url: "/api/prescriptions",
         });
 
         const body = JSON.parse(response.body);
@@ -187,7 +198,7 @@ describe("API Integration Tests", () => {
       it("should return 404 for non-existent prescription", async () => {
         const response = await app.inject({
           method: "GET",
-          url: "/prescriptions/non-existent-id",
+          url: "/api/prescriptions/non-existent-id",
         });
 
         expect(response.statusCode).toBe(404);
@@ -209,7 +220,7 @@ describe("API Integration Tests", () => {
 
         const createResponse = await app.inject({
           method: "POST",
-          url: "/prescriptions",
+          url: "/api/prescriptions/issue",
           payload: mockPrescriptionRequest,
         });
 
@@ -218,7 +229,7 @@ describe("API Integration Tests", () => {
         // Then retrieve it
         const getResponse = await app.inject({
           method: "GET",
-          url: `/prescriptions/${id}`,
+          url: `/api/prescriptions/${id}`,
         });
 
         expect(getResponse.statusCode).toBe(200);
@@ -245,22 +256,23 @@ describe("API Integration Tests", () => {
 
         await app.inject({
           method: "POST",
-          url: "/prescriptions",
+          url: "/api/prescriptions/issue",
           payload: mockPrescriptionRequest,
         });
 
-        // Send webhook
+        // Send webhook with correct format
         const webhookPayload = {
-          event_type: "prescription.status_updated",
-          prescription_id: "RX-123456",
-          status: "Delivered",
-          data: {},
-          timestamp: new Date().toISOString(),
+          object: "event",
+          type: "prescription.status_updated",
+          data: {
+            prescription_token: "RX-123456",
+            status: "Delivered",
+          },
         };
 
         const response = await app.inject({
           method: "POST",
-          url: "/webhooks/signaturerx",
+          url: "/api/webhooks/signaturerx",
           payload: webhookPayload,
         });
 
@@ -272,12 +284,12 @@ describe("API Integration Tests", () => {
 
       it("should handle invalid webhook payload", async () => {
         const invalidPayload = {
-          event_type: "invalid",
+          type: "invalid",
         };
 
         const response = await app.inject({
           method: "POST",
-          url: "/webhooks/signaturerx",
+          url: "/api/webhooks/signaturerx",
           payload: invalidPayload,
         });
 

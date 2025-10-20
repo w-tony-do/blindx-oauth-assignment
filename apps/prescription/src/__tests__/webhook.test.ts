@@ -21,18 +21,19 @@ describe("Webhook Service", () => {
         mockSignatureRxResponse,
       );
 
-      expect(prescription.status).toBe("Sent");
+      expect(prescription.status).toBe("created");
       expect(prescription.signaturerx_prescription_id).toBe(
         mockSignatureRxResponse.prescription_id,
       );
 
       // Send webhook event
       const webhookEvent = {
-        event_type: "prescription.status_updated",
-        prescription_id: mockSignatureRxResponse.prescription_id!,
-        status: "Delivered",
-        data: {},
-        timestamp: new Date().toISOString(),
+        object: "event",
+        type: "prescription.status_updated",
+        data: {
+          prescription_token: mockSignatureRxResponse.prescription_id!,
+          status: "Delivered",
+        },
       };
 
       await webhookService.handleWebhookEvent(webhookEvent);
@@ -54,13 +55,13 @@ describe("Webhook Service", () => {
 
     it("should handle prescription.created event", async () => {
       const webhookEvent = {
-        event_type: "prescription.created",
-        prescription_id: "RX-NEW-123",
-        status: "Sent",
+        object: "event",
+        type: "prescription.created",
         data: {
+          prescription_token: "RX-NEW-123",
+          status: "created",
           patient_email: "test@example.com",
         },
-        timestamp: new Date().toISOString(),
       };
 
       await expect(
@@ -75,11 +76,12 @@ describe("Webhook Service", () => {
       );
 
       const webhookEvent = {
-        event_type: "prescription.cancelled",
-        prescription_id: mockSignatureRxResponse.prescription_id!,
-        status: "Cancelled",
-        data: {},
-        timestamp: new Date().toISOString(),
+        object: "event",
+        type: "prescription.cancelled",
+        data: {
+          prescription_token: mockSignatureRxResponse.prescription_id!,
+          status: "Cancelled",
+        },
       };
 
       await webhookService.handleWebhookEvent(webhookEvent);
@@ -104,13 +106,13 @@ describe("Webhook Service", () => {
       );
 
       const webhookEvent = {
-        event_type: "prescription.delivered",
-        prescription_id: mockSignatureRxResponse.prescription_id!,
-        status: "Delivered",
+        object: "event",
+        type: "prescription.delivered",
         data: {
+          prescription_token: mockSignatureRxResponse.prescription_id!,
+          status: "Delivered",
           delivered_at: new Date().toISOString(),
         },
-        timestamp: new Date().toISOString(),
       };
 
       await webhookService.handleWebhookEvent(webhookEvent);
@@ -130,11 +132,12 @@ describe("Webhook Service", () => {
 
     it("should not fail for non-existent prescription", async () => {
       const webhookEvent = {
-        event_type: "prescription.status_updated",
-        prescription_id: "NON-EXISTENT-ID",
-        status: "Delivered",
-        data: {},
-        timestamp: new Date().toISOString(),
+        object: "event",
+        type: "prescription.status_updated",
+        data: {
+          prescription_token: "NON-EXISTENT-ID",
+          status: "Delivered",
+        },
       };
 
       await expect(
@@ -157,11 +160,12 @@ describe("Webhook Service", () => {
 
       for (const status of statuses) {
         const webhookEvent = {
-          event_type: "prescription.status_updated",
-          prescription_id: mockSignatureRxResponse.prescription_id!,
-          status,
-          data: {},
-          timestamp: new Date().toISOString(),
+          object: "event",
+          type: "prescription.status_updated",
+          data: {
+            prescription_token: mockSignatureRxResponse.prescription_id!,
+            status,
+          },
         };
 
         await webhookService.handleWebhookEvent(webhookEvent);
@@ -182,11 +186,12 @@ describe("Webhook Service", () => {
 
     it("should handle missing prescription_id gracefully", async () => {
       const invalidWebhook = {
-        event_type: "prescription.status_updated",
-        prescription_id: "",
-        status: "",
-        data: {},
-        timestamp: new Date().toISOString(),
+        object: "event",
+        type: "prescription.status_updated",
+        data: {
+          prescription_token: "",
+          status: "",
+        },
       };
 
       // Should not throw, just not update anything
@@ -204,11 +209,12 @@ describe("Webhook Service", () => {
       );
 
       const webhookEvent = {
-        event_type: "prescription.status_updated",
-        prescription_id: mockSignatureRxResponse.prescription_id!,
-        status: "Delivered",
-        data: {},
-        timestamp: new Date().toISOString(),
+        object: "event",
+        type: "prescription.status_updated",
+        data: {
+          prescription_token: mockSignatureRxResponse.prescription_id!,
+          status: "Delivered",
+        },
       };
 
       await webhookService.handleWebhookEvent(webhookEvent);
@@ -230,11 +236,12 @@ describe("Webhook Service", () => {
 
       for (const eventType of eventTypes) {
         const webhookEvent = {
-          event_type: eventType,
-          prescription_id: "RX-TEST-" + Date.now(),
-          status: "Processing",
-          data: {},
-          timestamp: new Date().toISOString(),
+          object: "event",
+          type: eventType,
+          data: {
+            prescription_token: "RX-TEST-" + Date.now(),
+            status: "Processing",
+          },
         };
 
         await expect(
@@ -247,11 +254,13 @@ describe("Webhook Service", () => {
   describe("Webhook Data Validation", () => {
     it("should accept valid timestamp formats", async () => {
       const webhookEvent = {
-        event_type: "prescription.created",
-        prescription_id: "RX-123",
-        status: "Sent",
-        data: {},
-        timestamp: new Date().toISOString(),
+        object: "event",
+        type: "prescription.created",
+        data: {
+          prescription_token: "RX-123",
+          status: "created",
+          timestamp: new Date().toISOString(),
+        },
       };
 
       await expect(
@@ -266,16 +275,16 @@ describe("Webhook Service", () => {
       );
 
       const webhookEvent = {
-        event_type: "prescription.status_updated",
-        prescription_id: mockSignatureRxResponse.prescription_id!,
-        status: "Delivered",
+        object: "event",
+        type: "prescription.status_updated",
         data: {
+          prescription_token: mockSignatureRxResponse.prescription_id!,
+          status: "Delivered",
           tracking_number: "TRACK123",
           courier: "Royal Mail",
           delivered_at: new Date().toISOString(),
           signature_required: true,
         },
-        timestamp: new Date().toISOString(),
       };
 
       await expect(

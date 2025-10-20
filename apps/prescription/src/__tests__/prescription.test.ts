@@ -27,7 +27,7 @@ describe("Prescription Service", () => {
       expect(prescription.patient_name).toBe(
         `${mockPrescriptionRequest.patient.first_name} ${mockPrescriptionRequest.patient.last_name}`,
       );
-      expect(prescription.status).toBe(mockSignatureRxResponse.status);
+      expect(prescription.status).toBe("created");
       expect(prescription.signaturerx_prescription_id).toBe(
         mockSignatureRxResponse.prescription_id,
       );
@@ -109,8 +109,10 @@ describe("Prescription Service", () => {
 
   describe("getPrescriptionById", () => {
     it("should return null for non-existent prescription", async () => {
-      const prescription =
-        await prescriptionService.getPrescriptionById("non-existent-id");
+      // Use a valid UUID format for the test
+      const prescription = await prescriptionService.getPrescriptionById(
+        "00000000-0000-0000-0000-000000000000",
+      );
 
       expect(prescription).toBeNull();
     });
@@ -138,7 +140,7 @@ describe("Prescription Service", () => {
         mockSignatureRxResponse,
       );
 
-      expect(created.status).toBe("Sent");
+      expect(created.status).toBe("created");
 
       await prescriptionService.updatePrescriptionStatus(
         mockSignatureRxResponse.prescription_id!,
@@ -270,7 +272,7 @@ describe("Prescription Service", () => {
       await prescriptionService.issuePrescription(mockPrescriptionRequest);
 
       const prescriptionCall = (fetch as any).mock.calls.find((call: any) =>
-        call[0].includes("/prescriptions"),
+        call[0].includes("/ehr-prescription-patient"),
       );
 
       expect(prescriptionCall).toBeDefined();
