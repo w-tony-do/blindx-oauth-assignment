@@ -1,6 +1,7 @@
 import { Redis } from "ioredis";
 
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
+console.log("🟡 REDIS_URL: ", REDIS_URL);
 
 export const redisClient = new Redis(REDIS_URL, {
   maxRetriesPerRequest: 3,
