@@ -4,7 +4,7 @@ Live Demo:
 
 [API](https://blindx-api.preseo.dev)
 
-[Front End Site](https://blindx-assignment-frontend.vercel.app)
+[Front End Site](https://blindx-oauth-assignment.vercel.app)
 
 A comprehensive OAuth 2.0 Client Credentials integration prototype between the Blinx PACO platform and SignatureRx API, demonstrating secure authentication, token management, and prescription issuance capabilities.
 
@@ -445,7 +445,7 @@ proxy: {
 
 1. Update `prescription/src/contracts/api.contract.ts`
 2. Add route handler in `prescription/src/router.ts/`
-3. Register in `backend/src/main.ts`
+3. Register in `prescription/src/main.ts`
 4. Update frontend API client
 
 ### Database Migrations
@@ -489,6 +489,6 @@ curl -X POST http://localhost:3000/prescriptions/issue \
 - [x] Frontend React UI
 - [x] Unit & Integration Tests
 - [x] Docker Configuration
-- [ ] Comprehensive Documentation
+- [x] Comprehensive Documentation
 
 ---
