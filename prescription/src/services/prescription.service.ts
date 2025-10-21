@@ -1,5 +1,4 @@
 import type { CreatePrescriptionRequest, StoredPrescription } from "@contract";
-import type { PrescriptionsTable } from "../libs/db/database";
 import { $db } from "../libs/db/database";
 import {
   SignatureRxPrescriptionResponse,
@@ -8,7 +7,16 @@ import {
 import * as signatureRxService from "./signaturerx.service";
 import { mockPrescription } from "../helpers/mock-api";
 
-function mapToStoredPrescription(row: PrescriptionsTable): StoredPrescription {
+function mapToStoredPrescription(row: {
+  id: string;
+  signaturerx_prescription_id: string | null;
+  patient_email: string;
+  patient_name: string;
+  status: string;
+  medicines: unknown;
+  created_at: Date;
+  updated_at: Date;
+}): StoredPrescription {
   return {
     id: row.id,
     signaturerx_prescription_id: row.signaturerx_prescription_id,

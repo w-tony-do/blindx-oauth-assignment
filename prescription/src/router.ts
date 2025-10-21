@@ -71,7 +71,12 @@ export const router = (
 
           return {
             status: 500,
-            body: { error: error.message || "Failed to create prescription" },
+            body: {
+              error:
+                error instanceof Error
+                  ? error.message
+                  : "Failed to create prescription",
+            },
           };
         }
       },

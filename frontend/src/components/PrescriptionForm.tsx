@@ -55,7 +55,7 @@ export function PrescriptionForm({
     last_name: "Doe",
     email: "john.doe@example.com",
     phone: "441234567890",
-    gender: "male" as const,
+    gender: "male" as "male" | "female" | "other",
     birth_day: "15",
     birth_month: "06",
     birth_year: "1985",
@@ -241,7 +241,10 @@ export function PrescriptionForm({
               id="gender"
               value={patient.gender}
               onChange={(e) =>
-                setPatient({ ...patient, gender: e.target.value })
+                setPatient({
+                  ...patient,
+                  gender: e.target.value as "male" | "female" | "other",
+                })
               }
               required
               className="form-control"
