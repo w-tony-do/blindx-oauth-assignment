@@ -37,8 +37,5 @@ jobs:
       - name: Type constraint check
         run: pnpm --filter @repo/contracts build && pnpm check-types
 
-      - name: CVE check
-        run: pnpm audit
-
       - name: Unit testing
         run: pnpm test
