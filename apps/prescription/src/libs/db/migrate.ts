@@ -3,7 +3,7 @@ import "dotenv/config";
 import { promises as fs } from "fs";
 import { FileMigrationProvider, Migrator } from "kysely";
 import path from "path";
-import { createDatabase } from "./database.js";
+import { createDatabase } from "./database";
 
 async function migrateToLatest() {
   const connectionString = process.env.DATABASE_URL;

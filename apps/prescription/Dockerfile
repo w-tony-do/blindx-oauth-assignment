@@ -41,11 +41,11 @@ COPY apps/prescription/package.json ./apps/prescription/
 # Install only production dependencies
 RUN pnpm install --prod --frozen-lockfile
 
-# Copy built files from builder stage
-COPY --from=builder /app/apps/prescription/dist ./apps/prescription/dist
+# Copy source files for tsx execution
+COPY apps/prescription/src ./apps/prescription/src
 
-# Copy built migration files to the dist folder
-COPY --from=builder /app/apps/prescription/dist/libs/db/migrations ./apps/prescription/dist/libs/db/migrations
+# Copy built migration files from builder stage (if any)
+COPY --from=builder /app/apps/prescription/dist/libs/db/migrations ./apps/prescription/dist/libs/db/migrations 2>/dev/null || true
 
 # Copy built shared packages if they have dist folders
 COPY --from=builder /app/packages ./packages
@@ -68,5 +68,5 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
     CMD node -e "require('http').get('http://localhost:3001/api/health', (r) => { process.exit(r.statusCode === 200 ? 0 : 1); })" || exit 1
 
-# Start the application
-CMD ["node", "dist/main.js"]
+# Start the application using tsx
+CMD ["node_modules/.bin/tsx", "src/main.ts"]
