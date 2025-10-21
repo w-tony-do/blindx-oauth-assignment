@@ -1,13 +1,16 @@
+import { GLOBAL_CONFIG } from "../constants/config";
 import { REDIS_KEYS, redisClient } from "../libs/redis";
 import { SignatureRxTokenResponse, TokenStore } from "../types/auth";
 
 export function getConfig() {
-  const isMock = process.env.SIGNATURERX_MOCK === "true";
-  const clientId = process.env.SIGNATURERX_CLIENT_ID || "";
-  const clientSecret = process.env.SIGNATURERX_CLIENT_SECRET || "";
-  const signatureRxBaseUrl = process.env.SIGNATURERX_BASE_URL || "";
-
-  return { clientId, clientSecret, signatureRxBaseUrl, isMock };
+  return {
+    isMock: process.env.SIGNATURERX_MOCK === "true",
+    clientId: process.env.SIGNATURERX_CLIENT_ID || "",
+    clientSecret: process.env.SIGNATURERX_CLIENT_SECRET || "",
+    signatureRxBaseUrl: process.env.SIGNATURERX_BASE_URL || "",
+    signatureRxWebhookSigningSecret:
+      process.env.SIGNATURERX_WEBHOOK_SIGNING_SECRET || "",
+  };
 }
 
 export async function getTokenFromRedis(): Promise<TokenStore | null> {
@@ -36,7 +39,7 @@ async function saveTokenToRedis(tokenStore: TokenStore): Promise<void> {
 }
 
 async function fetchNewToken(): Promise<SignatureRxTokenResponse> {
-  const { clientId, clientSecret, signatureRxBaseUrl } = getConfig();
+  const { clientId, clientSecret, signatureRxBaseUrl } = GLOBAL_CONFIG;
 
   if (!clientId || !clientSecret) {
     console.warn(
@@ -119,7 +122,7 @@ async function fetchNewToken(): Promise<SignatureRxTokenResponse> {
 export async function getAccessToken(): Promise<string> {
   const tokenStore = await getTokenFromRedis();
 
-  if (tokenStore) {
+  if (tokenStore && tokenStore.expires_at > Date.now()) {
     console.log("✅ Using cached access token from Redis");
     return tokenStore.access_token;
   }
@@ -143,4 +146,8 @@ export async function getTokenStatus(): Promise<{
     expiresAt: new Date(tokenStore.expires_at).toISOString(),
     isExpired: tokenStore.expires_at <= Date.now(),
   };
+}
+
+export async function resetTokenStore(): Promise<void> {
+  await redisClient.del(REDIS_KEYS.SIGNATURERX_TOKEN);
 }

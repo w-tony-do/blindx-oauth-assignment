@@ -300,6 +300,7 @@ The application implements OAuth 2.0 Client Credentials flow:
    - Falls back to new token request if refresh fails
 
 5. **Retry Logic**: On 401 errors
+
    - Refreshes token and retries once
    - Prevents infinite retry loops
 

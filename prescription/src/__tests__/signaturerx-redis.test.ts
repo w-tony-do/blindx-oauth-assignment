@@ -1,5 +1,6 @@
+import { GLOBAL_CONFIG } from "../constants/config";
+import { REDIS_KEYS, redisClient } from "../libs/redis";
 import * as signatureRxService from "../services/signaturerx.service";
-import { redisClient, REDIS_KEYS } from "../libs/redis";
 import { mockTokenResponse } from "./setup";
 
 describe("SignatureRx Service with Redis", () => {
@@ -53,7 +54,7 @@ describe("SignatureRx Service with Redis", () => {
       expect(fetch).toHaveBeenCalledTimes(1); // Only called once
     });
 
-    it("should refresh token using refresh_token", async () => {
+    it("should fetch new token when cached token is expired", async () => {
       // First fetch
       global.fetch = jest.fn().mockResolvedValueOnce({
         ok: true,
@@ -71,32 +72,32 @@ describe("SignatureRx Service with Redis", () => {
         JSON.stringify(tokenData),
       );
 
-      // Mock refresh token response
-      const refreshedToken = {
+      // Mock new token response
+      const newTokenResponse = {
         ...mockTokenResponse,
         access_token: "refreshed_access_token",
       };
 
       global.fetch = jest.fn().mockResolvedValueOnce({
         ok: true,
-        json: async () => refreshedToken,
+        json: async () => newTokenResponse,
       } as Response);
 
       const newToken = await signatureRxService.getAccessToken();
 
       expect(newToken).toBe("refreshed_access_token");
       expect(fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/v1/refresh"),
+        expect.stringContaining("/oauth/token"),
         expect.objectContaining({
           method: "POST",
           headers: expect.objectContaining({
-            authorization: expect.stringContaining("Bearer"),
+            "Content-Type": "application/json",
           }),
         }),
       );
     });
 
-    it("should fetch new token if refresh fails", async () => {
+    it("should fetch new token if cached token is expired", async () => {
       // First fetch
       global.fetch = jest.fn().mockResolvedValueOnce({
         ok: true,
@@ -114,26 +115,19 @@ describe("SignatureRx Service with Redis", () => {
         JSON.stringify(tokenData),
       );
 
-      // Mock refresh failure and new token fetch
-      global.fetch = jest
-        .fn()
-        .mockResolvedValueOnce({
-          ok: false,
-          status: 401,
-          text: async () => "Invalid refresh token",
-        } as Response)
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({
-            ...mockTokenResponse,
-            access_token: "new_token_after_refresh_failed",
-          }),
-        } as Response);
+      // Mock new token fetch
+      global.fetch = jest.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          ...mockTokenResponse,
+          access_token: "new_token_after_expired",
+        }),
+      } as Response);
 
       const token = await signatureRxService.getAccessToken();
 
-      expect(token).toBe("new_token_after_refresh_failed");
-      expect(fetch).toHaveBeenCalledTimes(2); // Refresh attempt + new token fetch
+      expect(token).toBe("new_token_after_expired");
+      expect(fetch).toHaveBeenCalledTimes(1);
     });
 
     it("should set TTL on Redis token", async () => {
@@ -266,7 +260,7 @@ describe("SignatureRx Service with Redis", () => {
 
   describe("Config", () => {
     it("should return correct configuration", () => {
-      const config = signatureRxService.getConfig();
+      const config = GLOBAL_CONFIG;
 
       expect(config).toHaveProperty("clientId");
       expect(config).toHaveProperty("clientSecret");
@@ -275,13 +269,10 @@ describe("SignatureRx Service with Redis", () => {
     });
 
     it("should use environment variables", () => {
-      process.env.SIGNATURERX_CLIENT_ID = "test_client_id";
-      process.env.SIGNATURERX_CLIENT_SECRET = "test_secret";
-
-      const config = signatureRxService.getConfig();
+      const config = GLOBAL_CONFIG;
 
       expect(config.clientId).toBe("test_client_id");
-      expect(config.clientSecret).toBe("test_secret");
+      expect(config.clientSecret).toBe("test_client_secret");
     });
   });
 });

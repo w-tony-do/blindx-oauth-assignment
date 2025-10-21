@@ -8,7 +8,10 @@ import {
   issuePrescription,
   listPrescriptions,
 } from "./services/prescription.service";
-import { handleWebhookEvent } from "./services/webhook.service";
+import {
+  checkSumPayload,
+  handleWebhookEvent,
+} from "./services/webhook.service";
 
 export const router = (
   app: ReturnType<typeof Fastify>,
@@ -113,8 +116,13 @@ export const router = (
       },
     },
     webhooks: {
-      signaturerx: async ({ body }) => {
+      signaturerx: async ({ body, headers }) => {
         try {
+          const signature = headers["signaturerx-signature"] as string;
+
+          if (!checkSumPayload(signature, body))
+            throw new Error("Invalid signature");
+
           await handleWebhookEvent(body);
           return {
             status: 200,

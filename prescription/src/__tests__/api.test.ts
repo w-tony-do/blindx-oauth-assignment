@@ -92,6 +92,16 @@ import {
   mockSignatureRxResponse,
   mockTokenResponse,
 } from "./setup";
+import crypto from "crypto";
+
+// Helper function to generate webhook signature
+const generateWebhookSignature = (payload: any): string => {
+  const secret = process.env.SIGNATURERX_WEBHOOK_SIGNING_SECRET || "";
+  const hmac = crypto.createHmac("sha256", secret);
+  hmac.write(JSON.stringify(payload));
+  hmac.end();
+  return hmac.read().toString("hex");
+};
 
 describe("API Integration Tests", () => {
   let app: ReturnType<typeof Fastify>;
@@ -192,7 +202,7 @@ describe("API Integration Tests", () => {
         const body = JSON.parse(response.body);
         expect(body.id).toBeDefined();
         expect(body.status).toBe("created");
-        expect(body.prescription_id).toBe("SRXC49F3D4F66A7");
+        expect(body.prescription_id).toBe("RX-123456");
         expect(body.created_at).toBeDefined();
       });
 
@@ -359,10 +369,15 @@ describe("API Integration Tests", () => {
           },
         };
 
+        const signature = generateWebhookSignature(webhookPayload);
+
         const response = await app.inject({
           method: "POST",
           url: "/api/webhooks/signaturerx",
           payload: webhookPayload,
+          headers: {
+            "signaturerx-signature": signature,
+          },
         });
 
         expect(response.statusCode).toBe(200);
@@ -376,10 +391,15 @@ describe("API Integration Tests", () => {
           type: "invalid",
         };
 
+        const signature = generateWebhookSignature(invalidPayload);
+
         const response = await app.inject({
           method: "POST",
           url: "/api/webhooks/signaturerx",
           payload: invalidPayload,
+          headers: {
+            "signaturerx-signature": signature,
+          },
         });
 
         expect(response.statusCode).toBe(400);

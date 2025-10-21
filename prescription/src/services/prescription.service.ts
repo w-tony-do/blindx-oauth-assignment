@@ -1,4 +1,5 @@
 import type { CreatePrescriptionRequest, StoredPrescription } from "@contract";
+import { GLOBAL_CONFIG } from "../constants/config";
 import { mockPrescription } from "../helpers/mock-api";
 import { $db } from "../libs/db/database";
 import { REDIS_KEYS, redisClient } from "../libs/redis";
@@ -102,7 +103,7 @@ export async function issuePrescription(
   retryOnExpiry = true,
 ): Promise<SignatureRxApiResponse> {
   const accessToken = await signatureRxService.getAccessToken();
-  const { signatureRxBaseUrl, isMock } = signatureRxService.getConfig();
+  const { isMock, signatureRxBaseUrl } = GLOBAL_CONFIG;
 
   if (isMock) {
     return mockPrescription() as SignatureRxApiResponse;

@@ -1,5 +1,20 @@
 import type { WebhookEvent } from "@contract";
+import crypto from "crypto";
 import * as prescriptionService from "./prescription.service";
+import { GLOBAL_CONFIG } from "../constants/config";
+
+export const checkSumPayload = (signature: string, event: WebhookEvent) => {
+  const { signatureRxWebhookSigningSecret } = GLOBAL_CONFIG;
+  const hmac = crypto.createHmac("sha256", signatureRxWebhookSigningSecret);
+  hmac.write(JSON.stringify(event)); // write in to the stream
+  hmac.end(); // can't read from the stream until you call end()
+
+  const hash = hmac.read().toString("hex"); // read out hmac digest
+  console.log("Received Hash: ", signature);
+  console.log("Calculated Hash: ", hash);
+
+  return hash === signature;
+};
 
 export async function handleWebhookEvent(event: WebhookEvent): Promise<void> {
   console.log(
