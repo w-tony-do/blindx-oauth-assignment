@@ -1,4 +1,3 @@
-import { generateJwtToken } from "../helpers/mock-api";
 import { REDIS_KEYS, redisClient } from "../libs/redis";
 import { SignatureRxTokenResponse, TokenStore } from "../types/auth";
 
@@ -25,32 +24,15 @@ export async function getTokenFromRedis(): Promise<TokenStore | null> {
 }
 
 async function saveTokenToRedis(tokenStore: TokenStore): Promise<void> {
-  try {
-    const ttl = Math.max(
-      Math.floor((tokenStore.expires_at - Date.now()) / 1000),
-      0,
-    );
-    await redisClient.setex(
-      REDIS_KEYS.SIGNATURERX_TOKEN,
-      ttl,
-      JSON.stringify(tokenStore),
-    );
-  } catch (error) {
-    console.error("❌ Failed to save token to Redis:", error);
-    throw error;
-  }
-}
-
-async function deleteTokenFromRedis(): Promise<void> {
-  try {
-    await redisClient.del(REDIS_KEYS.SIGNATURERX_TOKEN);
-  } catch (error) {
-    console.error("❌ Failed to delete token from Redis:", error);
-  }
-}
-
-export async function resetTokenStore(): Promise<void> {
-  await deleteTokenFromRedis();
+  const ttl = Math.max(
+    Math.floor((tokenStore.expires_at - Date.now()) / 1000),
+    0,
+  );
+  await redisClient.setex(
+    REDIS_KEYS.SIGNATURERX_TOKEN,
+    ttl,
+    JSON.stringify(tokenStore),
+  );
 }
 
 async function fetchNewToken(): Promise<SignatureRxTokenResponse> {
@@ -96,76 +78,53 @@ async function fetchNewToken(): Promise<SignatureRxTokenResponse> {
   return data;
 }
 
-async function fetchSignatureRxRefreshToken(
-  nearlyExpiredToken: string,
-): Promise<SignatureRxTokenResponse | null> {
-  const { signatureRxBaseUrl } = getConfig();
-
-  try {
-    const response = await fetch(`${signatureRxBaseUrl}/api/v1/refresh`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        authorization: `Bearer ${nearlyExpiredToken}`,
-      },
-    });
-
-    if (!response.ok) {
-      const error = await response.text();
-      console.error("❌ Token refresh failed:", error);
-      return null;
-    }
-
-    const data = (await response.json()) as SignatureRxTokenResponse;
-
-    const newTokenStore: TokenStore = {
-      access_token: data.access_token,
-      expires_at: Date.now() + data.expires_in * 1000 - 60000,
-    };
-
-    await saveTokenToRedis(newTokenStore);
-
-    console.log("✅ Token refreshed successfully");
-
-    return data;
-  } catch (error) {
-    console.error("❌ Token refresh exception:", error);
-    return null;
-  }
-}
-
-export async function refreshNewToken(): Promise<SignatureRxTokenResponse> {
-  if (getConfig().isMock) {
-    return generateJwtToken();
-  }
-  const tokenStore = await getTokenFromRedis();
-
-  if (!tokenStore) {
-    console.log("🔑 No token found, fetching new token...");
-    return fetchNewToken();
-  }
-
-  console.log("🔄 Refreshing token using refresh token...");
-  const refreshedToken = await fetchSignatureRxRefreshToken(
-    tokenStore.access_token,
-  );
-
-  if (refreshedToken) {
-    return refreshedToken;
-  }
-
-  console.log("🔑 Refresh failed, fetching new token...");
-  return fetchNewToken();
-}
+// async function fetchSignatureRxRefreshToken(
+//   nearlyExpiredToken: string,
+// ): Promise<SignatureRxTokenResponse | null> {
+//   const { signatureRxBaseUrl } = getConfig();
+//
+//   try {
+//     const response = await fetch(`${signatureRxBaseUrl}/api/v1/refresh`, {
+//       method: "POST",
+//       headers: {
+//         "Content-Type": "application/json",
+//         authorization: `Bearer ${nearlyExpiredToken}`,
+//       },
+//     });
+//
+//     if (!response.ok) {
+//       const error = await response.text();
+//       console.error("❌ Token refresh failed:", error);
+//       return null;
+//     }
+//
+//     const data = (await response.json()) as SignatureRxTokenResponse;
+//
+//     const newTokenStore = {
+//       access_token: data.access_token,
+//       expires_at: Date.now() + data.expires_in * 1000 - 60000,
+//     };
+//
+//     await saveTokenToRedis(newTokenStore);
+//
+//     console.log("✅ Token refreshed successfully");
+//
+//     return data;
+//   } catch (error) {
+//     console.error("❌ Token refresh exception:", error);
+//     return null;
+//   }
+// }
 
 export async function getAccessToken(): Promise<string> {
   const tokenStore = await getTokenFromRedis();
-  if (tokenStore && tokenStore.expires_at > Date.now()) {
+
+  if (tokenStore) {
     console.log("✅ Using cached access token from Redis");
     return tokenStore.access_token;
   }
 
-  return (await refreshNewToken()).access_token;
+  return (await fetchNewToken()).access_token;
 }
 
 export async function getTokenStatus(): Promise<{

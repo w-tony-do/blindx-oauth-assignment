@@ -127,14 +127,7 @@ blinx-signaturerx-integration/
 - Docker and Docker Compose
 - Git
 
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/tung-dnt/PreSEO.git
-cd PreSEO
-```
-
-### 2. Set Up Environment Variables
+### 1. Set Up Environment Variables
 
 ```bash
 cp .env.example .env
@@ -147,7 +140,7 @@ SIGNATURERX_CLIENT_ID=your_actual_client_id
 SIGNATURERX_CLIENT_SECRET=your_actual_client_secret
 ```
 
-### 3. Start Database
+### 2. Start Database
 
 ```bash
 docker-compose up -d
@@ -155,7 +148,7 @@ docker-compose up -d
 
 Wait for PostgreSQL to be ready (check with `docker-compose logs postgres`).
 
-### 4. Backend Setup
+### 3. Backend Setup
 
 ```bash
 cd backend
@@ -166,7 +159,7 @@ npm run dev             # Start development server
 
 Backend will be running on `http://localhost:3000`
 
-### 5. Frontend Setup
+### 4. Frontend Setup
 
 Open a new terminal:
 
@@ -285,19 +278,23 @@ Check if the API is running.
 The application implements OAuth 2.0 Client Credentials flow:
 
 1. **Token Request**: On startup or when token is missing
+
    - POST to `/oauth/token` with client credentials
    - Receives `access_token` and `refresh_token`
    - Calculates expiry time (with 5-minute buffer)
 
 2. **Token Storage**: In-memory caching
+
    - Stores token with expiry timestamp
    - No persistence (for prototype security)
 
 3. **Token Usage**: Automatic injection
+
    - Added as `Authorization: Bearer <token>` header
    - Used for all SignatureRx API calls
 
 4. **Token Refresh**: Automatic on expiry
+
    - Checks expiry before each request
    - Uses refresh token if expired
    - Falls back to new token request if refresh fails
@@ -482,7 +479,7 @@ curl -X POST http://localhost:3000/prescriptions/issue \
 **Completion Checklist**:
 
 - [x] OAuth 2.0 Client Credentials Flow
-- [ ] Token Management (Access + Refresh)
+- [x] Token Management (Access + Refresh)
 - [x] Prescription API Integration
 - [x] Webhook Event Handling
 - [x] Database Setup with Kysely

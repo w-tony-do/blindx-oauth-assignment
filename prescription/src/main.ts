@@ -6,10 +6,6 @@ import Fastify from "fastify";
 import { $db } from "./libs/db/database";
 import { redisClient } from "./libs/redis";
 import { router } from "./router";
-import {
-  startTokenRefreshCron,
-  stopTokenRefreshCron,
-} from "./services/token-refresh-cron.service";
 
 const PORT = parseInt(process.env.PORT || "3001", 10);
 
@@ -43,14 +39,14 @@ async function main() {
     console.log(`\n🚀 Server running on http://localhost:${PORT}`);
     console.log(`📚 API endpoints available at http://localhost:${PORT}/api`);
 
-    startTokenRefreshCron();
+    // startTokenRefreshCron();
   } catch (err) {
     app.log.error(err);
   }
 
   const shutdown = async (signal: string) => {
     console.log(`\n${signal} received, shutting down gracefully...`);
-    stopTokenRefreshCron();
+    // stopTokenRefreshCron();
     await app.close();
     await $db().destroy();
     await redisClient.quit();

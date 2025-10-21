@@ -48,7 +48,6 @@ export const router = (
             body,
             signatureRxResponse,
           );
-
           return {
             status: 200,
             body: {
@@ -68,7 +67,6 @@ export const router = (
               body: { error: "Authentication failed with SignatureRx" },
             };
           }
-
           return {
             status: 500,
             body: {
@@ -80,7 +78,6 @@ export const router = (
           };
         }
       },
-
       list: async () => {
         const prescriptions = await listPrescriptions();
 
@@ -92,7 +89,6 @@ export const router = (
           },
         };
       },
-
       getById: async ({ params }) => {
         try {
           const prescription = await getPrescriptionById(params.id);
@@ -103,7 +99,6 @@ export const router = (
               body: { error: "Prescription not found" },
             };
           }
-
           return {
             status: 200,
             body: prescription,
@@ -121,7 +116,6 @@ export const router = (
       signaturerx: async ({ body }) => {
         try {
           await handleWebhookEvent(body);
-
           return {
             status: 200,
             body: {

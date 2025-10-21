@@ -1,11 +1,12 @@
 import type { CreatePrescriptionRequest, StoredPrescription } from "@contract";
+import { mockPrescription } from "../helpers/mock-api";
 import { $db } from "../libs/db/database";
+import { REDIS_KEYS, redisClient } from "../libs/redis";
 import {
-  SignatureRxPrescriptionResponse,
   SignatureRxApiResponse,
+  SignatureRxPrescriptionResponse,
 } from "../types/auth";
 import * as signatureRxService from "./signaturerx.service";
-import { mockPrescription } from "../helpers/mock-api";
 
 function mapToStoredPrescription(row: {
   id: string;
@@ -102,6 +103,7 @@ export async function issuePrescription(
 ): Promise<SignatureRxApiResponse> {
   const accessToken = await signatureRxService.getAccessToken();
   const { signatureRxBaseUrl, isMock } = signatureRxService.getConfig();
+
   if (isMock) {
     return mockPrescription() as SignatureRxApiResponse;
   }
@@ -121,11 +123,11 @@ export async function issuePrescription(
     body: JSON.stringify(payload),
   });
 
-  // Handle token expiry
   if (response.status === 401 && retryOnExpiry) {
     console.log("🔄 Token expired mid-request, refreshing and retrying...");
-    await signatureRxService.resetTokenStore(); // Force token refresh
-    return issuePrescription(payload, false); // Retry once
+    await redisClient.del(REDIS_KEYS.SIGNATURERX_TOKEN);
+
+    return issuePrescription(payload, false);
   }
 
   const responseData = (await response.json()) as SignatureRxApiResponse;
