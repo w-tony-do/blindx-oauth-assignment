@@ -1,0 +1,68 @@
+# Testing
+coverage
+**/coverage
+**/__tests__/**
+**/*.test.ts
+**/*.spec.ts
+**/*.test.js
+**/*.spec.js
+
+# Build output (keep source for building)
+**/dist
+**/build
+**/out
+**/.turbo
+out
+
+# Environment files (except examples)
+.env
+.env.local
+.env.*.local
+**/.env
+**/.env.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+DEPLOYMENT.md
+DOCKER_COMPOSE_REBUILD.md
+DOCKER_QUICK_REFERENCE.md
+
+# Docker
+docker-compose*.yml
+docker-compose*.yaml
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Database
+*.db
+*.sqlite
+
+# Misc
+.cache
+.parcel-cache
+.eslintcache
+tmp
+temp
+.tmp
+.temp

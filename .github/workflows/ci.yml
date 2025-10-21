@@ -35,7 +35,13 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Type constraint check
-        run: pnpm --filter @repo/contracts build && pnpm check-types
+        run: pnpm typecheck
 
-      - name: Unit testing
-        run: pnpm test
+      - name: Linting
+        run: pnpm lint
+
+      - name: API testing
+        run: pnpm api:test
+
+      - name: UI unit testing
+        run: pnpm ui:test

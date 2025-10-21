@@ -33,7 +33,7 @@ services:
     image: blindx-prescription:latest
     build:
       context: .
-      dockerfile: ./apps/prescription/Dockerfile
+      dockerfile: ./prescription/Dockerfile
     container_name: blindx-prescription
     restart: unless-stopped
     environment:
@@ -74,7 +74,7 @@ services:
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://blinx:blinx_password@postgres:5432/blinx_signaturerx
-    command: node dist/libs/db/migrate.js
+    command: node ./out/migrate.js
     depends_on:
       postgres:
         condition: service_healthy

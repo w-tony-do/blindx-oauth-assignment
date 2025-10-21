@@ -1,0 +1,17 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out",
+    "rootDir": "..",
+    "lib": ["ES2020"],
+    "types": ["node", "jest"],
+    "moduleResolution": "bundler"
+  },
+  "include": ["src/**/*", "../shared/**/*"],
+  "exclude": [
+    "**/*.test.ts",
+    "**/__tests__/**/*",
+    "**/*.spec.ts",
+    "node_modules"
+  ]
+}
