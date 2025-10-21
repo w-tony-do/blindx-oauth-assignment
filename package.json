@@ -3,9 +3,13 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@10.0.0",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "api:dev": "tsx watch prescription/src/main.ts",
-    "api:build": "node esbuild.config.js",
+    "api:build": "node esbuild.config.mjs",
     "api:start": "NODE_ENV=production node out/index.js",
     "api:test": "jest",
     "api:coverage": "jest --coverage",
