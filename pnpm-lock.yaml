@@ -133,6 +133,9 @@ importers:
       '@types/pg':
         specifier: ^8.11.6
         version: 8.15.5
+      esbuild:
+        specifier: ^0.25.11
+        version: 0.25.11
       eslint:
         specifier: ^8.57.0
         version: 8.57.1

@@ -1,72 +1,45 @@
 # Build stage
-FROM node:20-alpine AS builder
+FROM node:20-alpine AS base
 
+FROM base AS builder
+RUN apk update
+RUN apk add --no-cache libc6-compat
+# Set working directory
+WORKDIR /app
+# Replace <your-major-version> with the major version installed in your repository. For example:
+# RUN yarn global add turbo@^2
+RUN yarn global add turbo@^2
+COPY . .
+
+# Generate a partial monorepo with a pruned lockfile for a target workspace.
+RUN turbo prune prescription --docker
+
+# Add lockfile and package.json's of isolated subworkspace
+FROM base AS installer
+RUN apk update
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Install pnpm
-RUN npm install -g pnpm
+# First install the dependencies (as they change less often)
+COPY --from=builder /app/out/json/ .
+RUN npm i -g pnpm
+RUN pnpm install
+# Build the project
+COPY --from=builder /app/out/full/ .
+RUN pnpm turbo run build --filter=prescription
 
-# Copy monorepo root files
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
-
-# Copy shared packages
-COPY packages ./packages
-
-# Copy prescription app
-COPY apps/prescription ./apps/prescription
-
-# Install all dependencies (including workspace dependencies)
-RUN pnpm install --frozen-lockfile
-
-# Build shared packages and the prescription app
-RUN pnpm run build --filter=prescription...
-
-# Production stage
-FROM node:20-alpine AS production
-
+FROM base AS runner
 WORKDIR /app
 
-# Install pnpm
-RUN npm install -g pnpm
+# Don't run production as root
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nodejs
+USER nodejs
 
-# Copy monorepo root files
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+# Copy the built application
+COPY --from=installer --chown=nodejs:nodejs /app/apps/prescription/out/index.js ./index.js
 
-# Copy shared packages (source code needed for workspace references)
-COPY packages ./packages
+# Set production environment
+ENV NODE_ENV=production
 
-# Copy prescription app package.json
-COPY apps/prescription/package.json ./apps/prescription/
-
-# Install only production dependencies
-RUN pnpm install --prod --frozen-lockfile
-
-# Copy source files for tsx execution
-COPY apps/prescription/src ./apps/prescription/src
-
-# Copy built migration files from builder stage (if any)
-COPY --from=builder /app/apps/prescription/dist/libs/db/migrations ./apps/prescription/dist/libs/db/migrations 2>/dev/null || true
-
-# Copy built shared packages if they have dist folders
-COPY --from=builder /app/packages ./packages
-
-# Create non-root user
-RUN addgroup -g 1001 -S appuser && \
-    adduser -S -u 1001 -G appuser appuser && \
-    chown -R appuser:appuser /app
-
-# Switch to non-root user
-USER appuser
-
-# Set working directory to the app
-WORKDIR /app/apps/prescription
-
-# Expose port
-EXPOSE 3001
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:3001/api/health', (r) => { process.exit(r.statusCode === 200 ? 0 : 1); })" || exit 1
-
-# Start the application using tsx
-CMD ["node_modules/.bin/tsx", "src/main.ts"]
+CMD ["node", "index.js"]

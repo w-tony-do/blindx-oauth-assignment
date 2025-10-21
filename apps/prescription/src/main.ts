@@ -15,16 +15,19 @@ const PORT = parseInt(process.env.PORT || "3001", 10);
 
 async function main() {
   const app = Fastify({
-    logger: {
-      level: "info",
-      transport: {
-        target: "pino-pretty",
-        options: {
-          translateTime: "HH:MM:ss Z",
-          ignore: "pid,hostname",
-        },
-      },
-    },
+    logger:
+      process.env.NODE_ENV === "production"
+        ? { level: "info" }
+        : {
+            level: "info",
+            transport: {
+              target: "pino-pretty",
+              options: {
+                translateTime: "HH:MM:ss Z",
+                ignore: "pid,hostname",
+              },
+            },
+          },
   });
 
   await app.register(cors, {
