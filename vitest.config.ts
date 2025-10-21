@@ -11,6 +11,10 @@ export default defineConfig({
     alias: {
       "@contract": path.resolve(__dirname, "shared/contract.ts"),
     },
+    conditions: ["development"],
+  },
+  define: {
+    "process.env.NODE_ENV": JSON.stringify("test"),
   },
   test: {
     globals: true,
@@ -25,5 +29,8 @@ export default defineConfig({
       "**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*",
       "**/prescription/**",
     ],
+    env: {
+      NODE_ENV: "test",
+    },
   },
 });

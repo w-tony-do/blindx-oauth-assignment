@@ -70,6 +70,11 @@ describe("App", () => {
 
     render(<App />);
 
+    await waitFor(() => {
+      expect(apiClient.medications.list).toHaveBeenCalled();
+      expect(apiClient.prescriptions.list).toHaveBeenCalled();
+    });
+
     expect(
       screen.getByText("🏥 Blinx PACO - SignatureRx Integration"),
     ).toBeInTheDocument();
@@ -115,6 +120,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(apiClient.prescriptions.list).toHaveBeenCalledTimes(1);
+      expect(apiClient.medications.list).toHaveBeenCalled();
     });
   });
 
@@ -272,7 +278,7 @@ describe("App", () => {
     });
 
     const closeButton = screen.getAllByRole("button", { name: "×" })[0];
-    closeButton?.click();
+    await userEvent.click(closeButton);
 
     await waitFor(() => {
       expect(
@@ -434,6 +440,11 @@ describe("App", () => {
   it("handles network error during prescription creation", async () => {
     const user = userEvent.setup();
 
+    // Suppress expected console.error
+    const consoleErrorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+
     vi.mocked(apiClient.medications.list).mockResolvedValue({
       status: 200,
       body: { meds: mockMedications },
@@ -473,6 +484,8 @@ describe("App", () => {
         screen.getByText(/Failed to create prescription: Network error/),
       ).toBeInTheDocument();
     });
+
+    consoleErrorSpy.mockRestore();
   });
 
   it("handles 401 error during prescription creation", async () => {
