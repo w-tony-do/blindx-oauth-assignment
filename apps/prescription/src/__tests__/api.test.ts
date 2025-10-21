@@ -1,4 +1,88 @@
-import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
+// Mock database BEFORE importing other modules
+const mockPrescriptions = new Map<string, any>();
+let prescriptionCounter = 1;
+
+jest.mock("../libs/db/database", () => {
+  return {
+    $db: () => ({
+      deleteFrom: () => ({
+        execute: async () => {
+          mockPrescriptions.clear();
+          return [];
+        },
+      }),
+      selectFrom: () => ({
+        selectAll: () => {
+          const chainable = {
+            execute: async () => Array.from(mockPrescriptions.values()),
+            orderBy: (_col: string, _dir: string) => ({
+              execute: async () =>
+                Array.from(mockPrescriptions.values()).sort(
+                  (a: any, b: any) =>
+                    b.created_at.getTime() - a.created_at.getTime(),
+                ),
+            }),
+            where: (col: string, _op: string, val: any) => ({
+              executeTakeFirst: async () => {
+                for (const [id, prescription] of mockPrescriptions.entries()) {
+                  if (col === "id" && id === val) {
+                    return prescription;
+                  }
+                  if (
+                    col === "signaturerx_prescription_id" &&
+                    prescription.signaturerx_prescription_id === val
+                  ) {
+                    return prescription;
+                  }
+                }
+                return null;
+              },
+            }),
+          };
+          return chainable;
+        },
+      }),
+      insertInto: (_table: string) => ({
+        values: (values: any) => ({
+          returningAll: () => ({
+            executeTakeFirstOrThrow: async () => {
+              const id = `prescription_${prescriptionCounter++}`;
+              const now = new Date();
+              const prescription = {
+                id,
+                ...values,
+                created_at: now,
+                updated_at: now,
+              };
+              mockPrescriptions.set(id, prescription);
+              return prescription;
+            },
+          }),
+        }),
+      }),
+      updateTable: (_table: string) => ({
+        set: (values: any) => ({
+          where: (col: string, _op: string, val: any) => ({
+            execute: async () => {
+              for (const [_id, prescription] of mockPrescriptions.entries()) {
+                if (
+                  col === "signaturerx_prescription_id" &&
+                  prescription.signaturerx_prescription_id === val
+                ) {
+                  Object.assign(prescription, values);
+                }
+              }
+              return [];
+            },
+          }),
+        }),
+      }),
+      destroy: async () => {},
+    }),
+    createDatabase: () => ({}),
+  };
+});
+
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import { initServer } from "@ts-rest/fastify";
@@ -11,6 +95,11 @@ import {
 
 describe("API Integration Tests", () => {
   let app: ReturnType<typeof Fastify>;
+
+  beforeEach(() => {
+    mockPrescriptions.clear();
+    prescriptionCounter = 1;
+  });
 
   beforeAll(async () => {
     // Enable mock mode for API tests
@@ -82,7 +171,7 @@ describe("API Integration Tests", () => {
     describe("POST /prescriptions", () => {
       it("should create a prescription successfully", async () => {
         // Mock SignatureRx API calls
-        global.fetch = vi
+        global.fetch = jest
           .fn()
           .mockResolvedValueOnce({
             ok: true,
@@ -113,7 +202,7 @@ describe("API Integration Tests", () => {
         process.env.SIGNATURERX_MOCK = "false";
 
         // Mock failed auth
-        global.fetch = vi.fn().mockResolvedValueOnce({
+        global.fetch = jest.fn().mockResolvedValueOnce({
           ok: false,
           status: 401,
           text: async () => "Unauthorized",
@@ -207,7 +296,7 @@ describe("API Integration Tests", () => {
       });
 
       it("should retrieve prescription by id", async () => {
-        global.fetch = vi
+        global.fetch = jest
           .fn()
           .mockResolvedValueOnce({
             ok: true,
@@ -243,7 +332,7 @@ describe("API Integration Tests", () => {
   describe("Webhooks API", () => {
     describe("POST /webhooks/signaturerx", () => {
       it("should process webhook successfully", async () => {
-        global.fetch = vi
+        global.fetch = jest
           .fn()
           .mockResolvedValueOnce({
             ok: true,

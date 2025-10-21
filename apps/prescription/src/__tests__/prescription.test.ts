@@ -1,4 +1,88 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
+// Mock database BEFORE importing services
+const mockPrescriptions = new Map<string, any>();
+let prescriptionCounter = 1;
+
+jest.mock("../libs/db/database", () => {
+  return {
+    $db: () => ({
+      deleteFrom: () => ({
+        execute: async () => {
+          mockPrescriptions.clear();
+          return [];
+        },
+      }),
+      selectFrom: () => ({
+        selectAll: () => {
+          const chainable = {
+            execute: async () => Array.from(mockPrescriptions.values()),
+            orderBy: (_col: string, _dir: string) => ({
+              execute: async () =>
+                Array.from(mockPrescriptions.values()).sort(
+                  (a: any, b: any) =>
+                    b.created_at.getTime() - a.created_at.getTime(),
+                ),
+            }),
+            where: (col: string, _op: string, val: any) => ({
+              executeTakeFirst: async () => {
+                for (const [id, prescription] of mockPrescriptions.entries()) {
+                  if (col === "id" && id === val) {
+                    return prescription;
+                  }
+                  if (
+                    col === "signaturerx_prescription_id" &&
+                    prescription.signaturerx_prescription_id === val
+                  ) {
+                    return prescription;
+                  }
+                }
+                return null;
+              },
+            }),
+          };
+          return chainable;
+        },
+      }),
+      insertInto: (_table: string) => ({
+        values: (values: any) => ({
+          returningAll: () => ({
+            executeTakeFirstOrThrow: async () => {
+              const id = `prescription_${prescriptionCounter++}`;
+              const now = new Date();
+              const prescription = {
+                id,
+                ...values,
+                created_at: now,
+                updated_at: now,
+              };
+              mockPrescriptions.set(id, prescription);
+              return prescription;
+            },
+          }),
+        }),
+      }),
+      updateTable: (_table: string) => ({
+        set: (values: any) => ({
+          where: (col: string, _op: string, val: any) => ({
+            execute: async () => {
+              for (const [_id, prescription] of mockPrescriptions.entries()) {
+                if (
+                  col === "signaturerx_prescription_id" &&
+                  prescription.signaturerx_prescription_id === val
+                ) {
+                  Object.assign(prescription, values);
+                }
+              }
+              return [];
+            },
+          }),
+        }),
+      }),
+      destroy: async () => {},
+    }),
+    createDatabase: () => ({}),
+  };
+});
+
 import * as prescriptionService from "../services/prescription.service";
 import {
   mockPrescriptionRequest,
@@ -12,9 +96,11 @@ let fetchSpy: any;
 
 describe("Prescription Service", () => {
   beforeEach(async () => {
+    mockPrescriptions.clear();
+    prescriptionCounter = 1;
     await setupTestDatabase();
-    vi.clearAllMocks();
-    fetchSpy = vi.spyOn(global, "fetch");
+    // Don't call jest.clearAllMocks() as it clears mock implementations
+    fetchSpy = jest.spyOn(global, "fetch");
   });
 
   afterEach(() => {

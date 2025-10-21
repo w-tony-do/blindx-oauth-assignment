@@ -1,4 +1,3 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import * as signatureRxService from "../services/signaturerx.service";
 import { redisClient, REDIS_KEYS } from "../libs/redis";
 import { mockTokenResponse } from "./setup";
@@ -9,16 +8,16 @@ describe("SignatureRx Service with Redis", () => {
     process.env.SIGNATURERX_MOCK = "false";
     await signatureRxService.resetTokenStore();
     await redisClient.flushdb();
-    vi.clearAllMocks();
+    jest.clearAllMocks();
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
+    jest.restoreAllMocks();
   });
 
   describe("Token Management", () => {
     it("should fetch a new token and store in Redis", async () => {
-      global.fetch = vi.fn().mockResolvedValueOnce({
+      global.fetch = jest.fn().mockResolvedValueOnce({
         ok: true,
         json: async () => mockTokenResponse,
       } as Response);
@@ -39,7 +38,7 @@ describe("SignatureRx Service with Redis", () => {
 
     it("should return cached token from Redis if still valid", async () => {
       // Mock first fetch
-      global.fetch = vi.fn().mockResolvedValueOnce({
+      global.fetch = jest.fn().mockResolvedValueOnce({
         ok: true,
         json: async () => mockTokenResponse,
       } as Response);
@@ -56,7 +55,7 @@ describe("SignatureRx Service with Redis", () => {
 
     it("should refresh token using refresh_token", async () => {
       // First fetch
-      global.fetch = vi.fn().mockResolvedValueOnce({
+      global.fetch = jest.fn().mockResolvedValueOnce({
         ok: true,
         json: async () => mockTokenResponse,
       } as Response);
@@ -78,7 +77,7 @@ describe("SignatureRx Service with Redis", () => {
         access_token: "refreshed_access_token",
       };
 
-      global.fetch = vi.fn().mockResolvedValueOnce({
+      global.fetch = jest.fn().mockResolvedValueOnce({
         ok: true,
         json: async () => refreshedToken,
       } as Response);
@@ -99,7 +98,7 @@ describe("SignatureRx Service with Redis", () => {
 
     it("should fetch new token if refresh fails", async () => {
       // First fetch
-      global.fetch = vi.fn().mockResolvedValueOnce({
+      global.fetch = jest.fn().mockResolvedValueOnce({
         ok: true,
         json: async () => mockTokenResponse,
       } as Response);
@@ -116,7 +115,7 @@ describe("SignatureRx Service with Redis", () => {
       );
 
       // Mock refresh failure and new token fetch
-      global.fetch = vi
+      global.fetch = jest
         .fn()
         .mockResolvedValueOnce({
           ok: false,
@@ -138,7 +137,7 @@ describe("SignatureRx Service with Redis", () => {
     });
 
     it("should set TTL on Redis token", async () => {
-      global.fetch = vi.fn().mockResolvedValueOnce({
+      global.fetch = jest.fn().mockResolvedValueOnce({
         ok: true,
         json: async () => mockTokenResponse,
       } as Response);
@@ -162,7 +161,7 @@ describe("SignatureRx Service with Redis", () => {
     });
 
     it("should return correct status when token exists", async () => {
-      global.fetch = vi.fn().mockResolvedValueOnce({
+      global.fetch = jest.fn().mockResolvedValueOnce({
         ok: true,
         json: async () => mockTokenResponse,
       } as Response);
@@ -199,7 +198,7 @@ describe("SignatureRx Service with Redis", () => {
   describe("Reset Token Store", () => {
     it("should delete token from Redis", async () => {
       // First store a token
-      global.fetch = vi.fn().mockResolvedValueOnce({
+      global.fetch = jest.fn().mockResolvedValueOnce({
         ok: true,
         json: async () => mockTokenResponse,
       } as Response);
@@ -224,7 +223,7 @@ describe("SignatureRx Service with Redis", () => {
       const originalClientId = process.env.SIGNATURERX_CLIENT_ID;
       delete process.env.SIGNATURERX_CLIENT_ID;
 
-      global.fetch = vi.fn().mockResolvedValueOnce({
+      global.fetch = jest.fn().mockResolvedValueOnce({
         ok: false,
         status: 401,
         text: async () => "Unauthorized",
@@ -236,7 +235,9 @@ describe("SignatureRx Service with Redis", () => {
     });
 
     it("should handle fetch errors gracefully", async () => {
-      global.fetch = vi.fn().mockRejectedValueOnce(new Error("Network error"));
+      global.fetch = jest
+        .fn()
+        .mockRejectedValueOnce(new Error("Network error"));
 
       await expect(signatureRxService.getAccessToken()).rejects.toThrow(
         "Network error",
@@ -246,9 +247,11 @@ describe("SignatureRx Service with Redis", () => {
     it("should handle Redis connection errors", async () => {
       // Simulate Redis error by closing connection temporarily
       const originalGet = redisClient.get;
-      redisClient.get = vi.fn().mockRejectedValueOnce(new Error("Redis error"));
+      redisClient.get = jest
+        .fn()
+        .mockRejectedValueOnce(new Error("Redis error"));
 
-      global.fetch = vi.fn().mockResolvedValueOnce({
+      global.fetch = jest.fn().mockResolvedValueOnce({
         ok: true,
         json: async () => mockTokenResponse,
       } as Response);

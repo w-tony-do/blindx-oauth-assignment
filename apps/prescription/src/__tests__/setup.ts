@@ -1,5 +1,4 @@
 import { config } from "dotenv";
-import { afterAll, beforeAll, beforeEach, vi } from "vitest";
 import RedisMock from "ioredis-mock";
 
 // Load environment variables from .env file
@@ -15,115 +14,15 @@ process.env.SIGNATURERX_MOCK = "false";
 process.env.DATABASE_URL = "postgresql://test:test@localhost:5432/test";
 
 // Mock Redis client
-const mockRedisClient = new RedisMock();
+export const mockRedisClient = new RedisMock();
 
 // Mock the redis module
-vi.mock("../libs/redis", () => ({
+jest.mock("../libs/redis", () => ({
   redisClient: mockRedisClient,
   REDIS_KEYS: {
     SIGNATURERX_TOKEN: "signaturerx:token",
   },
 }));
-
-// Mock database with in-memory storage
-const mockPrescriptions = new Map();
-let prescriptionCounter = 1;
-
-const mockDb = {
-  deleteFrom: vi.fn(() => ({
-    execute: vi.fn(async () => {
-      mockPrescriptions.clear();
-      return [];
-    }),
-  })),
-  selectFrom: vi.fn(() => ({
-    selectAll: vi.fn(() => {
-      const chainable = {
-        execute: vi.fn(async () => Array.from(mockPrescriptions.values())),
-        orderBy: vi.fn(() => ({
-          execute: vi.fn(async () =>
-            Array.from(mockPrescriptions.values()).sort(
-              (a: any, b: any) =>
-                b.created_at.getTime() - a.created_at.getTime(),
-            ),
-          ),
-        })),
-        where: vi.fn((col: string, op: string, val: any) => ({
-          executeTakeFirst: vi.fn(async () => {
-            for (const [id, prescription] of mockPrescriptions.entries()) {
-              if (col === "id" && id === val) {
-                return prescription;
-              }
-              if (
-                col === "signaturerx_prescription_id" &&
-                prescription.signaturerx_prescription_id === val
-              ) {
-                return prescription;
-              }
-            }
-            return null;
-          }),
-        })),
-      };
-      return chainable;
-    }),
-  })),
-  insertInto: vi.fn(() => ({
-    values: vi.fn((values: any) => ({
-      returningAll: vi.fn(() => ({
-        executeTakeFirstOrThrow: vi.fn(async () => {
-          const id = `prescription_${prescriptionCounter++}`;
-          const now = new Date();
-          const prescription = {
-            id,
-            ...values,
-            created_at: now,
-            updated_at: now,
-          };
-          mockPrescriptions.set(id, prescription);
-          return prescription;
-        }),
-      })),
-    })),
-  })),
-  updateTable: vi.fn(() => ({
-    set: vi.fn((values: any) => ({
-      where: vi.fn((col: string, op: string, val: any) => ({
-        execute: vi.fn(async () => {
-          for (const [id, prescription] of mockPrescriptions.entries()) {
-            if (
-              col === "signaturerx_prescription_id" &&
-              prescription.signaturerx_prescription_id === val
-            ) {
-              Object.assign(prescription, values);
-            }
-          }
-          return [];
-        }),
-      })),
-    })),
-  })),
-  destroy: vi.fn(async () => {}),
-};
-
-// Mock the database module
-vi.mock("../libs/db/database", () => ({
-  $db: vi.fn(() => mockDb),
-  createDatabase: vi.fn(() => mockDb),
-}));
-
-// Test database setup
-export async function setupTestDatabase() {
-  // Clean up test data before each test
-  mockPrescriptions.clear();
-  prescriptionCounter = 1;
-}
-
-// Clean up test data
-export async function cleanupTestDatabase() {
-  mockPrescriptions.clear();
-  prescriptionCounter = 1;
-}
 
 // Setup Redis for tests
 export async function setupTestRedis() {
@@ -135,6 +34,16 @@ export async function cleanupTestRedis() {
   await mockRedisClient.flushdb();
 }
 
+// Test database setup
+export async function setupTestDatabase() {
+  // Database mock is handled in individual test files
+}
+
+// Clean up test data
+export async function cleanupTestDatabase() {
+  // Database mock is handled in individual test files
+}
+
 // Global test hooks
 beforeAll(async () => {
   await setupTestRedis();
@@ -143,7 +52,7 @@ beforeAll(async () => {
 beforeEach(async () => {
   await setupTestDatabase();
   await setupTestRedis();
-  vi.clearAllMocks();
+  // Don't call jest.clearAllMocks() as it clears mock implementations
 });
 
 afterAll(async () => {
