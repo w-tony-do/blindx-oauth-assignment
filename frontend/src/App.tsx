@@ -100,6 +100,7 @@ function App() {
           },
         ],
         prescriber_ip: "127.0.0.1",
+        integration_code: 286568,
       };
 
       const response = await apiClient.prescriptions.create({

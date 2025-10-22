@@ -71,6 +71,7 @@ const CreatePrescriptionRequestSchema = z.object({
     .array(PrescriptionMedicineSchema)
     .min(1, "At least one medicine is required"),
   prescriber_ip: z.string().optional(),
+  integration_code: z.string(),
 });
 
 const PrescriptionResponseSchema = z.object({
