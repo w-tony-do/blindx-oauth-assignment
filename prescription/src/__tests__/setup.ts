@@ -109,6 +109,7 @@ export const mockPrescriptionRequest = {
   notes: "",
   client_ref_id: "",
   medicines: [mockMedicine],
+  integration_code: "test_integration",
 };
 
 export const mockSignatureRxResponse = {
