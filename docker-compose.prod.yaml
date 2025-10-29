@@ -61,8 +61,8 @@ services:
       SIGNATURERX_MOCK: ${SIGNATURERX_MOCK:-true}
       SIGNATURERX_CLINIC_ID: ${SIGNATURERX_CLINIC_ID:-842}
       TOKEN_CHECK_INTERVAL_MINUTES: ${TOKEN_CHECK_INTERVAL_MINUTES:-5}
-    expose:
-      - 3001
+    ports:
+      - "3001:3001"
     networks:
       - blindx-network
     depends_on:
